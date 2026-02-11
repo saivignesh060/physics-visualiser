@@ -466,10 +466,21 @@ function drawPulleyScene(
 
     ctx.restore()
 
-    // Pulley at top of incline (offset slightly to hang off edge)
-    const pulleyOffset = 20
-    const pulleyX = originX + inclineLength * Math.cos(angleRad) + pulleyOffset
-    const pulleyY = originY - inclineLength * Math.sin(angleRad)
+    // Pulley at top of incline (extended along the incline vector)
+    const pulleyExtension = 40 // Pixel distance to extend past the ramp tip
+    const pulleyX = originX + (inclineLength + pulleyExtension) * Math.cos(angleRad)
+    const pulleyY = originY - (inclineLength + pulleyExtension) * Math.sin(angleRad)
+
+    // Draw bracket connecting ramp to pulley
+    const rampTipX = originX + inclineLength * Math.cos(angleRad)
+    const rampTipY = originY - inclineLength * Math.sin(angleRad)
+
+    ctx.strokeStyle = '#64748b'
+    ctx.lineWidth = 4
+    ctx.beginPath()
+    ctx.moveTo(rampTipX, rampTipY)
+    ctx.lineTo(pulleyX, pulleyY)
+    ctx.stroke()
 
     ctx.fillStyle = '#fbbf24'
     ctx.beginPath()
@@ -480,15 +491,11 @@ function drawPulleyScene(
     ctx.stroke()
 
     // String from m1 to pulley
-    const rampTopX = originX + inclineLength * Math.cos(angleRad)
-    const rampTopY = originY - inclineLength * Math.sin(angleRad)
-
     ctx.strokeStyle = '#475569'
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.moveTo(x1, y1)
-    ctx.lineTo(rampTopX, rampTopY) // To corner
-    ctx.lineTo(pulleyX, pulleyY)   // To pulley
+    ctx.lineTo(pulleyX, pulleyY)
     ctx.stroke()
 
     // Hanging mass (m2)
