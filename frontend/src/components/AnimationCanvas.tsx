@@ -514,7 +514,7 @@ function drawConicalPendulumScene(
     _height: number,
     _graphData: GraphDataPoint[],
     currentData: GraphDataPoint,
-    _parameters: SimulationParameters
+    parameters: SimulationParameters
 ) {
     const originX = width / 2
     const originY = 80
