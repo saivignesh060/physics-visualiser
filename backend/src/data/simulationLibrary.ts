@@ -105,7 +105,6 @@ export const SIMULATION_LIBRARY: SimulationTemplate[] = [
         objectType: 'point_mass',
     },
 
-    // ==================== DYNAMICS ====================
     {
         id: 'inclined-plane-friction',
         name: 'Inclined Plane with Friction',
@@ -117,12 +116,14 @@ export const SIMULATION_LIBRARY: SimulationTemplate[] = [
             inclineAngle: 30,
             frictionCoefficient: 0.3,
             gravity: 9.8,
+            direction: 1, // 1 for down, -1 for up
         },
         parameterDefinitions: [
             { key: 'mass', label: 'Mass', min: 0.5, max: 10, step: 0.1, unit: 'kg' },
             { key: 'inclineAngle', label: 'Incline Angle', min: 0, max: 60, step: 1, unit: '°' },
             { key: 'frictionCoefficient', label: 'Friction Coefficient (μ)', min: 0, max: 1, step: 0.05, unit: '' },
             { key: 'gravity', label: 'Gravity', min: 1, max: 20, step: 0.1, unit: 'm/s²' },
+            { key: 'direction', label: 'Direction', min: -1, max: 1, step: 2, unit: '' }, // -1 = up, 1 = down
         ],
         explanation: 'Net force = mg·sin(θ) - μ·mg·cos(θ). The block accelerates if gravity component exceeds friction.',
         objectType: 'block',
@@ -135,20 +136,18 @@ export const SIMULATION_LIBRARY: SimulationTemplate[] = [
         keywords: ['friction', 'horizontal', 'pulling', 'box', 'surface', 'drag'],
         defaultParameters: {
             mass: 2.5,
-            tension: 35,
-            theta: 30,
+            appliedForce: 15,
             staticFriction: 0.5,
             kineticFriction: 0.4,
             gravity: 9.8,
         },
         parameterDefinitions: [
-            { key: 'tension', label: 'Tension (N)', min: 0, max: 100, step: 1, unit: 'N' },
+            { key: 'appliedForce', label: 'Applied Force', min: 0, max: 50, step: 0.5, unit: 'N' },
             { key: 'mass', label: 'Mass', min: 0.5, max: 10, step: 0.1, unit: 'kg' },
-            { key: 'theta', label: 'Angle (θ)', min: 0, max: 90, step: 1, unit: '°' },
             { key: 'staticFriction', label: 'Static Friction (μₛ)', min: 0, max: 1, step: 0.05, unit: '' },
             { key: 'kineticFriction', label: 'Kinetic Friction (μₖ)', min: 0, max: 1, step: 0.05, unit: '' },
         ],
-        explanation: 'Applied force must overcome static friction to start motion, then kinetic friction opposes motion.',
+        explanation: 'Applied force must overcome static friction (F_s = μₛ·N) to start motion, then kinetic friction (F_k = μₖ·N) opposes motion.',
         objectType: 'block',
     },
     {

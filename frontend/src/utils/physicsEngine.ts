@@ -76,8 +76,8 @@ function generateDynamicsData(
 ): GraphDataPoint[] {
     const data: GraphDataPoint[] = []
 
-    // Check if it's a friction horizontal simulation (has tension parameter)
-    if (params.tension !== undefined) {
+    // Check if it's a friction horizontal simulation (has appliedForce parameter)
+    if (params.appliedForce !== undefined) {
         return generateFrictionHorizontalData(_problem, params)
     }
 
@@ -87,11 +87,13 @@ function generateDynamicsData(
     const mu = params.frictionCoefficient || 0.3
     const g = params.gravity || 9.8
     const mass = params.mass || 1
+    const direction = params.direction || 1 // 1 for down, -1 for up
+    const inclineLength = 5 // Fixed length in meters
 
     const normalForce = mass * g * Math.cos(angleRad)
     const frictionForce = mu * normalForce
     const gravityComponent = mass * g * Math.sin(angleRad)
-    const netForce = gravityComponent - frictionForce
+    const netForce = direction * (gravityComponent - frictionForce)
     const acceleration = netForce / mass
 
     const dt = 0.02
@@ -103,14 +105,15 @@ function generateDynamicsData(
         const distance = 0.5 * acceleration * t * t
         const velocity = acceleration * t
 
+        // Position along the incline (constant length)
         const x = distance * Math.cos(angleRad)
-        const y = distance * Math.sin(angleRad)
+        const y = direction > 0 ? -distance * Math.sin(angleRad) : distance * Math.sin(angleRad)
         const vx = velocity * Math.cos(angleRad)
-        const vy = velocity * Math.sin(angleRad)
+        const vy = direction > 0 ? -velocity * Math.sin(angleRad) : velocity * Math.sin(angleRad)
 
         const speed = Math.abs(velocity)
         const ke = 0.5 * mass * speed ** 2
-        const pe = mass * g * y
+        const pe = mass * g * Math.abs(y)
 
         data.push({
             time: t,
@@ -119,13 +122,14 @@ function generateDynamicsData(
             velocityX: vx,
             velocityY: vy,
             accelerationX: acceleration * Math.cos(angleRad),
-            accelerationY: acceleration * Math.sin(angleRad),
+            accelerationY: direction > 0 ? -acceleration * Math.sin(angleRad) : acceleration * Math.sin(angleRad),
             kineticEnergy: ke,
             potentialEnergy: pe,
             totalEnergy: ke + pe,
         })
 
-        if (acceleration <= 0 && i > 0) break
+        // Stop if reached end of incline or stopped moving
+        if (Math.abs(distance) >= inclineLength || (acceleration <= 0 && i > 0)) break
     }
 
     return data
@@ -138,29 +142,24 @@ function generateFrictionHorizontalData(
     const data: GraphDataPoint[] = []
 
     const mass = params.mass || 2.5
-    const tension = params.tension || 35
-    const theta = ((params.theta || 30) * Math.PI) / 180
+    const appliedForce = params.appliedForce || 15
     const muStatic = params.staticFriction || 0.5
     const muKinetic = params.kineticFriction || 0.4
     const g = params.gravity || 9.8
 
-    // Force components
-    const tensionX = tension * Math.cos(theta)
-    const tensionY = tension * Math.sin(theta)
-
-    // Normal force (reduced by vertical component of tension)
-    const normalForce = mass * g - tensionY
+    // Normal force (on horizontal surface, N = mg)
+    const normalForce = mass * g
 
     // Static friction threshold
     const maxStaticFriction = muStatic * normalForce
 
     // Check if object moves
-    const isMoving = tensionX > maxStaticFriction
+    const isMoving = appliedForce > maxStaticFriction
 
     let acceleration = 0
     if (isMoving) {
         const kineticFriction = muKinetic * normalForce
-        const netForce = tensionX - kineticFriction
+        const netForce = appliedForce - kineticFriction
         acceleration = netForce / mass
     }
 
