@@ -1,6 +1,11 @@
 // Multi-domain physics engine with Semi-Implicit Euler Integration
 import { GraphDataPoint, SimulationParameters, PhysicsProblem } from '../types/types'
 
+// Utility function for formatting numbers
+export function formatNumber(value: number): string {
+    return value.toFixed(2)
+}
+
 export type SimulationType =
     | 'projectile'
     | 'incline-friction'
@@ -215,11 +220,11 @@ function generateConicalPendulumData(params: SimulationParameters): GraphDataPoi
 
         const x = radius * Math.cos(phi)
         const y = -height // Constant height
-        const z = radius * Math.sin(phi)
+
 
         const vx = -radius * omega * Math.sin(phi)
         const vy = 0
-        const vz = radius * omega * Math.cos(phi)
+
 
         const speed = radius * omega
         const ke = 0.5 * mass * speed * speed
@@ -451,8 +456,8 @@ function generateInclinePulleyData(params: SimulationParameters): GraphDataPoint
         const x1 = s * Math.cos(angleRad)
         const y1 = -s * Math.sin(angleRad)
 
-        // Position of m2 (hanging)
-        const x2 = x1 + 0.5 // Offset for visualization
+        // Position of m2 (hanging) - for future 3D visualization
+
         const y2 = y1 - s // Moves down as m1 moves up incline
 
         const speed = Math.abs(v)

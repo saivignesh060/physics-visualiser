@@ -338,7 +338,7 @@ function drawFrictionHorizontalScene(
 function drawPendulumScene(
     ctx: CanvasRenderingContext2D,
     width: number,
-    height: number,
+    _height: number,
     graphData: GraphDataPoint[],
     currentData: GraphDataPoint,
     _parameters: SimulationParameters
@@ -407,7 +407,7 @@ function drawPulleyScene(
     ctx: CanvasRenderingContext2D,
     width: number,
     height: number,
-    graphData: GraphDataPoint[],
+    _graphData: GraphDataPoint[],
     currentData: GraphDataPoint,
     parameters: SimulationParameters
 ) {
@@ -504,8 +504,8 @@ function drawPulleyScene(
 function drawConicalPendulumScene(
     ctx: CanvasRenderingContext2D,
     width: number,
-    height: number,
-    graphData: GraphDataPoint[],
+    _height: number,
+    _graphData: GraphDataPoint[],
     currentData: GraphDataPoint,
     _parameters: SimulationParameters
 ) {
