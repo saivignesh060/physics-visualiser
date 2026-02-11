@@ -110,7 +110,7 @@ Generate the complete simulation JSON:`
             throw new Error(`Gemini API error: ${response.status} ${response.statusText}`)
         }
 
-        const data = await response.json()
+        const data: any = await response.json()
         const text = data.candidates[0].content.parts[0].text
 
         // Extract JSON from response (in case Gemini adds markdown)
