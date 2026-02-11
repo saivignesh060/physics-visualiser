@@ -7,9 +7,19 @@ interface GraphDashboardProps {
 }
 
 export default function GraphDashboard({ data, currentTime }: GraphDashboardProps) {
+    // Downsample data to prevent performance issues
+    const downsampleData = (fullData: GraphDataPoint[], maxPoints = 200): GraphDataPoint[] => {
+        if (fullData.length <= maxPoints) return fullData
+        const samplingRate = Math.ceil(fullData.length / maxPoints)
+        return fullData.filter((_, index) => index % samplingRate === 0)
+    }
+
     // Find current data point
     const currentIndex = Math.floor(currentTime / 0.02)
     const currentData = data.slice(0, Math.max(currentIndex, 1))
+
+    // Downsample for rendering
+    const displayData = downsampleData(currentData, 200)
 
     return (
         <div>
@@ -20,7 +30,7 @@ export default function GraphDashboard({ data, currentTime }: GraphDashboardProp
                 <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="text-sm font-semibold text-gray-700 mb-3">Position vs Time</h3>
                     <ResponsiveContainer width="100%" height={200}>
-                        <LineChart data={currentData}>
+                        <LineChart data={displayData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                             <XAxis
                                 dataKey="time"
@@ -60,7 +70,7 @@ export default function GraphDashboard({ data, currentTime }: GraphDashboardProp
                 <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="text-sm font-semibold text-gray-700 mb-3">Velocity vs Time</h3>
                     <ResponsiveContainer width="100%" height={200}>
-                        <LineChart data={currentData}>
+                        <LineChart data={displayData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                             <XAxis
                                 dataKey="time"
@@ -100,7 +110,7 @@ export default function GraphDashboard({ data, currentTime }: GraphDashboardProp
                 <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="text-sm font-semibold text-gray-700 mb-3">Energy vs Time</h3>
                     <ResponsiveContainer width="100%" height={200}>
-                        <LineChart data={currentData}>
+                        <LineChart data={displayData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                             <XAxis
                                 dataKey="time"
@@ -149,7 +159,7 @@ export default function GraphDashboard({ data, currentTime }: GraphDashboardProp
                 <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="text-sm font-semibold text-gray-700 mb-3">Acceleration vs Time</h3>
                     <ResponsiveContainer width="100%" height={200}>
-                        <LineChart data={currentData}>
+                        <LineChart data={displayData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                             <XAxis
                                 dataKey="time"

@@ -1,118 +1,311 @@
-// Multi-domain physics engine
+// Multi-domain physics engine with Semi-Implicit Euler Integration
 import { GraphDataPoint, SimulationParameters, PhysicsProblem } from '../types/types'
+
+export type SimulationType =
+    | 'projectile'
+    | 'incline-friction'
+    | 'friction-horizontal'
+    | 'incline-pulley'
+    | 'pendulum'
+    | 'conical-pendulum'
+    | 'vertical-projectile'
+    | 'free-fall'
+    | 'uniform-acceleration'
+
+export function getSimulationType(problem: PhysicsProblem, params: SimulationParameters): SimulationType {
+    const objectType = problem.objects[0]?.type
+
+    // Check for pendulum
+    if (objectType === 'pendulum') {
+        if (params.angle !== undefined && params.length !== undefined) {
+            return 'conical-pendulum'
+        }
+        return 'pendulum'
+    }
+
+    // Check for dynamics simulations
+    if (params.inclineAngle !== undefined) {
+        if (params.mass2 !== undefined) {
+            return 'incline-pulley'
+        }
+        return 'incline-friction'
+    }
+
+    if (params.appliedForce !== undefined) {
+        return 'friction-horizontal'
+    }
+
+    // Kinematics simulations
+    if (params.angle === 90) {
+        return 'vertical-projectile'
+    }
+
+    if (params.angle === 270 && params.initialVelocity === 0) {
+        return 'free-fall'
+    }
+
+    if (params.angle === 0 || params.angle === 180) {
+        return 'uniform-acceleration'
+    }
+
+    return 'projectile'
+}
 
 export function generateSimulationData(
     problem: PhysicsProblem,
     params: SimulationParameters
 ): GraphDataPoint[] {
-    const domain = problem.domain[0]
-    const objectType = problem.objects[0]?.type
+    const simulationType = getSimulationType(problem, params)
 
-    // Check if it's a pendulum simulation
-    if (objectType === 'pendulum') {
-        return generatePendulumData(problem, params)
-    }
-
-    switch (domain) {
-        case 'dynamics':
-            return generateDynamicsData(problem, params)
-        case 'energy':
-            return generateEnergyData(problem, params)
-        case 'waves':
-            return generateWavesData(problem, params)
+    switch (simulationType) {
+        case 'pendulum':
+            return generatePendulumData(params)
+        case 'conical-pendulum':
+            return generateConicalPendulumData(params)
+        case 'incline-friction':
+            return generateInclineFrictionData(params)
+        case 'friction-horizontal':
+            return generateFrictionHorizontalData(params)
+        case 'incline-pulley':
+            return generateInclinePulleyData(params)
+        case 'projectile':
+        case 'vertical-projectile':
+        case 'free-fall':
+        case 'uniform-acceleration':
+            return generateKinematicsData(params)
         default:
-            return generateKinematicsData(problem, params)
+            return generateKinematicsData(params)
     }
 }
 
-function generateKinematicsData(
-    _problem: PhysicsProblem,
-    params: SimulationParameters
-): GraphDataPoint[] {
+// ==================== KINEMATICS (Projectile Motion) ====================
+function generateKinematicsData(params: SimulationParameters): GraphDataPoint[] {
     const data: GraphDataPoint[] = []
-    const g = params.gravity
-    const dt = 0.02
+    const g = params.gravity || 9.8
+    const dt = 0.02 // 20ms time step
 
-    const vx = params.initialVelocity * Math.cos((params.angle * Math.PI) / 180)
-    const vy = params.initialVelocity * Math.sin((params.angle * Math.PI) / 180)
+    const angleRad = (params.angle * Math.PI) / 180
+    let vx = params.initialVelocity * Math.cos(angleRad)
+    let vy = params.initialVelocity * Math.sin(angleRad)
+    let x = 0
+    let y = 0
+    let t = 0
 
-    const timeOfFlight = (2 * vy) / g
-    const steps = Math.ceil(timeOfFlight / dt)
+    const mass = params.mass || 1
+    const maxTime = 10
 
-    for (let i = 0; i <= steps; i++) {
-        const t = i * dt
-        const x = vx * t
-        const y = vy * t - 0.5 * g * t * t
+    // Semi-Implicit Euler Integration
+    while (t < maxTime && y >= 0) {
+        // Calculate forces and acceleration
+        const ax = 0 // No horizontal acceleration
+        const ay = -g // Gravity
 
-        if (y < 0 && i > 0) break
+        // Update velocity (using acceleration)
+        vx += ax * dt
+        vy += ay * dt
 
-        const velocityXCurrent = vx
-        const velocityYCurrent = vy - g * t
-        const speed = Math.sqrt(velocityXCurrent ** 2 + velocityYCurrent ** 2)
+        // Update position (using NEW velocity - Semi-Implicit Euler)
+        x += vx * dt
+        y += vy * dt
 
-        const ke = 0.5 * params.mass * speed ** 2
-        const pe = params.mass * g * y
+        // Calculate energies
+        const speed = Math.sqrt(vx * vx + vy * vy)
+        const ke = 0.5 * mass * speed * speed
+        const pe = mass * g * Math.max(0, y)
 
         data.push({
             time: t,
             positionX: x,
             positionY: y,
-            velocityX: velocityXCurrent,
-            velocityY: velocityYCurrent,
-            accelerationX: 0,
-            accelerationY: -g,
+            velocityX: vx,
+            velocityY: vy,
+            accelerationX: ax,
+            accelerationY: ay,
             kineticEnergy: ke,
             potentialEnergy: pe,
             totalEnergy: ke + pe,
         })
+
+        t += dt
+
+        // Stop if hit ground
+        if (y < 0 && data.length > 1) break
     }
 
     return data
 }
 
-function generateDynamicsData(
-    _problem: PhysicsProblem,
-    params: SimulationParameters
-): GraphDataPoint[] {
+// ==================== PENDULUM (Numerical Integration) ====================
+function generatePendulumData(params: SimulationParameters): GraphDataPoint[] {
     const data: GraphDataPoint[] = []
+    const g = params.gravity || 9.8
+    const length = params.length || 1
+    const mass = params.mass || 1
+    const dt = 0.02
 
-    // Check if it's a friction horizontal simulation (has appliedForce parameter)
-    if (params.appliedForce !== undefined) {
-        return generateFrictionHorizontalData(_problem, params)
+    // Initial conditions
+    const initialAngleRad = ((params.initialAngle || 30) * Math.PI) / 180
+    let theta = initialAngleRad // Current angle from vertical
+    let omega = 0 // Angular velocity
+    let t = 0
+    const maxTime = 10
+
+    // Semi-Implicit Euler for Pendulum
+    while (t < maxTime) {
+        // Calculate angular acceleration: α = -(g/L) * sin(θ)
+        const alpha = -(g / length) * Math.sin(theta)
+
+        // Update angular velocity
+        omega += alpha * dt
+
+        // Update angle (using NEW omega)
+        theta += omega * dt
+
+        // Convert to Cartesian coordinates
+        const x = length * Math.sin(theta)
+        const y = -length * Math.cos(theta) // Negative because y-axis points down
+
+        // Velocities
+        const vx = length * omega * Math.cos(theta)
+        const vy = length * omega * Math.sin(theta)
+
+        // Energies
+        const speed = Math.abs(length * omega)
+        const ke = 0.5 * mass * speed * speed
+        const pe = mass * g * (length - length * Math.cos(theta)) // Height above lowest point
+
+        data.push({
+            time: t,
+            positionX: x,
+            positionY: y,
+            velocityX: vx,
+            velocityY: vy,
+            accelerationX: -length * alpha * Math.sin(theta),
+            accelerationY: -length * alpha * Math.cos(theta),
+            kineticEnergy: ke,
+            potentialEnergy: pe,
+            totalEnergy: ke + pe,
+        })
+
+        t += dt
     }
 
-    // Otherwise, it's an inclined plane simulation
-    const inclineAngle = params.inclineAngle || 30
-    const angleRad = (inclineAngle * Math.PI) / 180
-    const mu = params.frictionCoefficient || 0.3
+    return data
+}
+
+// ==================== CONICAL PENDULUM ====================
+function generateConicalPendulumData(params: SimulationParameters): GraphDataPoint[] {
+    const data: GraphDataPoint[] = []
+    const g = params.gravity || 9.8
+    const length = params.length || 1
+    const mass = params.mass || 1
+    const coneAngleRad = ((params.angle || 30) * Math.PI) / 180
+    const dt = 0.02
+
+    // Calculate radius and angular velocity for circular motion
+    const radius = length * Math.sin(coneAngleRad)
+    const height = length * Math.cos(coneAngleRad)
+    const omega = Math.sqrt(g / (length * Math.cos(coneAngleRad)))
+
+    let t = 0
+    const maxTime = 10
+
+    while (t < maxTime) {
+        const phi = omega * t // Angle around the circle
+
+        const x = radius * Math.cos(phi)
+        const y = -height // Constant height
+        const z = radius * Math.sin(phi)
+
+        const vx = -radius * omega * Math.sin(phi)
+        const vy = 0
+        const vz = radius * omega * Math.cos(phi)
+
+        const speed = radius * omega
+        const ke = 0.5 * mass * speed * speed
+        const pe = mass * g * (length - height)
+
+        data.push({
+            time: t,
+            positionX: x,
+            positionY: y,
+            velocityX: vx,
+            velocityY: vy,
+            accelerationX: -radius * omega * omega * Math.cos(phi),
+            accelerationY: 0,
+            kineticEnergy: ke,
+            potentialEnergy: pe,
+            totalEnergy: ke + pe,
+        })
+
+        t += dt
+    }
+
+    return data
+}
+
+// ==================== INCLINED PLANE WITH FRICTION ====================
+function generateInclineFrictionData(params: SimulationParameters): GraphDataPoint[] {
+    const data: GraphDataPoint[] = []
     const g = params.gravity || 9.8
     const mass = params.mass || 1
-    const direction = params.direction || 1 // 1 for down, -1 for up
-    const inclineLength = 5 // Fixed length in meters
-
-    const normalForce = mass * g * Math.cos(angleRad)
-    const frictionForce = mu * normalForce
-    const gravityComponent = mass * g * Math.sin(angleRad)
-    const netForce = direction * (gravityComponent - frictionForce)
-    const acceleration = netForce / mass
-
+    const angleRad = ((params.inclineAngle || 30) * Math.PI) / 180
+    const muK = params.frictionCoefficient || 0.3
+    const muS = muK * 1.2 // Static friction slightly higher
+    const direction = params.direction || 1 // 1 = down, -1 = up
     const dt = 0.02
-    const maxTime = 5
-    const steps = Math.ceil(maxTime / dt)
 
-    for (let i = 0; i <= steps; i++) {
-        const t = i * dt
-        const distance = 0.5 * acceleration * t * t
-        const velocity = acceleration * t
+    // Initial conditions
+    let s = 0 // Distance along incline
+    let v = 0 // Velocity along incline
+    let t = 0
+    const maxTime = 10
+    const inclineLength = 5
 
-        // Position along the incline (constant length)
-        const x = distance * Math.cos(angleRad)
-        const y = direction > 0 ? -distance * Math.sin(angleRad) : distance * Math.sin(angleRad)
-        const vx = velocity * Math.cos(angleRad)
-        const vy = direction > 0 ? -velocity * Math.sin(angleRad) : velocity * Math.sin(angleRad)
+    // Forces
+    const normalForce = mass * g * Math.cos(angleRad)
+    const gravityParallel = mass * g * Math.sin(angleRad)
 
-        const speed = Math.abs(velocity)
-        const ke = 0.5 * mass * speed ** 2
+    // Semi-Implicit Euler
+    while (t < maxTime && Math.abs(s) < inclineLength) {
+        let a = 0
+
+        // Check if moving or static
+        if (Math.abs(v) < 0.001) {
+            // Static friction case
+            const maxStaticFriction = muS * normalForce
+
+            if (Math.abs(gravityParallel) <= maxStaticFriction) {
+                // Block sticks
+                a = 0
+                v = 0
+            } else {
+                // Overcome static friction, start moving
+                const frictionForce = muK * normalForce
+                const netForce = direction * gravityParallel - Math.sign(direction) * frictionForce
+                a = netForce / mass
+            }
+        } else {
+            // Kinetic friction opposes velocity
+            const frictionForce = muK * normalForce
+            const frictionDirection = -Math.sign(v)
+            const netForce = direction * gravityParallel + frictionDirection * frictionForce
+            a = netForce / mass
+        }
+
+        // Update velocity and position
+        v += a * dt
+        s += v * dt
+
+        // Convert to Cartesian coordinates
+        const x = s * Math.cos(angleRad)
+        const y = direction > 0 ? -s * Math.sin(angleRad) : s * Math.sin(angleRad)
+
+        const vx = v * Math.cos(angleRad)
+        const vy = direction > 0 ? -v * Math.sin(angleRad) : v * Math.sin(angleRad)
+
+        const speed = Math.abs(v)
+        const ke = 0.5 * mass * speed * speed
         const pe = mass * g * Math.abs(y)
 
         data.push({
@@ -121,222 +314,167 @@ function generateDynamicsData(
             positionY: y,
             velocityX: vx,
             velocityY: vy,
-            accelerationX: acceleration * Math.cos(angleRad),
-            accelerationY: direction > 0 ? -acceleration * Math.sin(angleRad) : acceleration * Math.sin(angleRad),
+            accelerationX: a * Math.cos(angleRad),
+            accelerationY: direction > 0 ? -a * Math.sin(angleRad) : a * Math.sin(angleRad),
             kineticEnergy: ke,
             potentialEnergy: pe,
             totalEnergy: ke + pe,
         })
 
-        // Stop if reached end of incline or stopped moving
-        if (Math.abs(distance) >= inclineLength || (acceleration <= 0 && i > 0)) break
+        t += dt
+
+        // Stop if velocity becomes zero and can't overcome static friction
+        if (Math.abs(v) < 0.001 && Math.abs(gravityParallel) <= muS * normalForce) {
+            break
+        }
     }
 
     return data
 }
 
-function generateFrictionHorizontalData(
-    _problem: PhysicsProblem,
-    params: SimulationParameters
-): GraphDataPoint[] {
+// ==================== FRICTION ON HORIZONTAL SURFACE ====================
+function generateFrictionHorizontalData(params: SimulationParameters): GraphDataPoint[] {
     const data: GraphDataPoint[] = []
-
+    const g = params.gravity || 9.8
     const mass = params.mass || 2.5
     const appliedForce = params.appliedForce || 15
-    const muStatic = params.staticFriction || 0.5
-    const muKinetic = params.kineticFriction || 0.4
-    const g = params.gravity || 9.8
-
-    // Normal force (on horizontal surface, N = mg)
-    const normalForce = mass * g
-
-    // Static friction threshold
-    const maxStaticFriction = muStatic * normalForce
-
-    // Check if object moves
-    const isMoving = appliedForce > maxStaticFriction
-
-    let acceleration = 0
-    if (isMoving) {
-        const kineticFriction = muKinetic * normalForce
-        const netForce = appliedForce - kineticFriction
-        acceleration = netForce / mass
-    }
-
+    const muS = params.staticFriction || 0.5
+    const muK = params.kineticFriction || 0.4
     const dt = 0.02
+
+    let x = 0
+    let v = 0
+    let t = 0
     const maxTime = 5
-    const steps = Math.ceil(maxTime / dt)
 
-    for (let i = 0; i <= steps; i++) {
-        const t = i * dt
+    const normalForce = mass * g
+    const maxStaticFriction = muS * normalForce
 
-        let x, vx
-        if (isMoving) {
-            x = 0.5 * acceleration * t * t
-            vx = acceleration * t
+    while (t < maxTime) {
+        let a = 0
+
+        if (Math.abs(v) < 0.001) {
+            // Static friction
+            if (appliedForce <= maxStaticFriction) {
+                a = 0
+                v = 0
+            } else {
+                const kineticFriction = muK * normalForce
+                const netForce = appliedForce - kineticFriction
+                a = netForce / mass
+            }
         } else {
-            x = 0
-            vx = 0
+            // Kinetic friction opposes motion
+            const kineticFriction = muK * normalForce
+            const frictionDirection = -Math.sign(v)
+            const netForce = appliedForce + frictionDirection * kineticFriction
+            a = netForce / mass
         }
 
-        const speed = Math.abs(vx)
-        const ke = 0.5 * mass * speed ** 2
+        v += a * dt
+        x += v * dt
+
+        const speed = Math.abs(v)
+        const ke = 0.5 * mass * speed * speed
 
         data.push({
             time: t,
             positionX: x,
             positionY: 0,
-            velocityX: vx,
+            velocityX: v,
             velocityY: 0,
-            accelerationX: acceleration,
+            accelerationX: a,
             accelerationY: 0,
             kineticEnergy: ke,
             potentialEnergy: 0,
             totalEnergy: ke,
         })
+
+        t += dt
     }
 
     return data
 }
 
-function generateEnergyData(
-    _problem: PhysicsProblem,
-    params: SimulationParameters
-): GraphDataPoint[] {
+// ==================== INCLINED PLANE WITH PULLEY (TWO MASSES) ====================
+function generateInclinePulleyData(params: SimulationParameters): GraphDataPoint[] {
     const data: GraphDataPoint[] = []
-    const obj = _problem.objects[0]
-    const metadata = obj.metadata || {}
-
-    const k = (metadata.springConstant as number) || 100
-    const x0 = (metadata.initialCompression as number) || 0.2
-    const mass = params.mass
-
-    const omega = Math.sqrt(k / mass)
-    const amplitude = x0
-
-    const dt = 0.02
-    const period = (2 * Math.PI) / omega
-    const maxTime = period * 2
-    const steps = Math.ceil(maxTime / dt)
-
-    for (let i = 0; i <= steps; i++) {
-        const t = i * dt
-
-        const x = amplitude * Math.cos(omega * t)
-        const vx = -amplitude * omega * Math.sin(omega * t)
-        const ax = -amplitude * omega * omega * Math.cos(omega * t)
-
-        const ke = 0.5 * mass * vx ** 2
-        const springPE = 0.5 * k * x ** 2
-
-        data.push({
-            time: t,
-            positionX: x,
-            positionY: 0,
-            velocityX: vx,
-            velocityY: 0,
-            accelerationX: ax,
-            accelerationY: 0,
-            kineticEnergy: ke,
-            potentialEnergy: springPE,
-            totalEnergy: ke + springPE,
-        })
-    }
-
-    return data
-}
-
-
-function generatePendulumData(
-    _problem: PhysicsProblem,
-    params: SimulationParameters
-): GraphDataPoint[] {
-    const data: GraphDataPoint[] = []
-
-    const length = params.length || 1
-    const theta0 = ((params.initialAngle || 30) * Math.PI) / 180
     const g = params.gravity || 9.8
-    const mass = params.mass || 1
-
-    // For small angles, use simple harmonic motion approximation
-    // For larger angles, use numerical integration
-    const omega = Math.sqrt(g / length)
-    const period = 2 * Math.PI / omega
-
+    const m1 = params.mass || 2 // Mass on incline
+    const m2 = params.mass2 || 1.5 // Hanging mass
+    const angleRad = ((params.inclineAngle || 30) * Math.PI) / 180
+    const muK = params.frictionCoefficient || 0.2
+    const muS = muK * 1.2
     const dt = 0.02
-    const maxTime = period * 3 // Show 3 complete periods
-    const steps = Math.ceil(maxTime / dt)
 
-    for (let i = 0; i <= steps; i++) {
-        const t = i * dt
+    let s = 0 // Distance (positive = m2 moving down)
+    let v = 0 // Velocity
+    let t = 0
+    const maxTime = 10
 
-        // Simple harmonic motion approximation (works well for small angles)
-        const theta = theta0 * Math.cos(omega * t)
-        const thetaDot = -theta0 * omega * Math.sin(omega * t)
+    const normalForce = m1 * g * Math.cos(angleRad)
+    const m1GravityParallel = m1 * g * Math.sin(angleRad)
+    const m2GravityForce = m2 * g
+    const systemMass = m1 + m2
 
-        // Convert to Cartesian coordinates
-        // Pendulum pivot is at (0, 0), bob hangs down
-        const x = length * Math.sin(theta)
-        const y = -length * Math.cos(theta)
+    while (t < maxTime && s < 5) {
+        let a = 0
 
-        // Velocity in Cartesian coordinates
-        const vx = length * Math.cos(theta) * thetaDot
-        const vy = length * Math.sin(theta) * thetaDot
+        if (Math.abs(v) < 0.001) {
+            // Static case
+            const maxStaticFriction = muS * normalForce
+            const drivingForce = m2GravityForce - m1GravityParallel
 
-        const speed = Math.sqrt(vx ** 2 + vy ** 2)
-        const ke = 0.5 * mass * speed ** 2
+            if (Math.abs(drivingForce) <= maxStaticFriction) {
+                a = 0
+                v = 0
+            } else {
+                const kineticFriction = muK * normalForce
+                const netForce = drivingForce - Math.sign(drivingForce) * kineticFriction
+                a = netForce / systemMass
+            }
+        } else {
+            // Moving case
+            const kineticFriction = muK * normalForce
+            const drivingForce = m2GravityForce - m1GravityParallel
 
-        // Potential energy relative to lowest point
-        const pe = mass * g * (y + length)
+            // Friction opposes motion
+            const frictionDirection = -Math.sign(v)
+            const netForce = drivingForce + frictionDirection * kineticFriction
+            a = netForce / systemMass
+        }
+
+        v += a * dt
+        s += v * dt
+
+        // Position of m1 on incline
+        const x1 = s * Math.cos(angleRad)
+        const y1 = -s * Math.sin(angleRad)
+
+        // Position of m2 (hanging)
+        const x2 = x1 + 0.5 // Offset for visualization
+        const y2 = y1 - s // Moves down as m1 moves up incline
+
+        const speed = Math.abs(v)
+        const ke = 0.5 * systemMass * speed * speed
+        const pe1 = m1 * g * Math.abs(y1)
+        const pe2 = m2 * g * Math.abs(y2)
 
         data.push({
             time: t,
-            positionX: x,
-            positionY: y,
-            velocityX: vx,
-            velocityY: vy,
-            accelerationX: 0,
-            accelerationY: 0,
+            positionX: x1,
+            positionY: y1,
+            velocityX: v * Math.cos(angleRad),
+            velocityY: -v * Math.sin(angleRad),
+            accelerationX: a * Math.cos(angleRad),
+            accelerationY: -a * Math.sin(angleRad),
             kineticEnergy: ke,
-            potentialEnergy: pe,
-            totalEnergy: ke + pe,
+            potentialEnergy: pe1 + pe2,
+            totalEnergy: ke + pe1 + pe2,
         })
+
+        t += dt
     }
 
     return data
-}
-
-function generateWavesData(
-    _problem: PhysicsProblem,
-    params: SimulationParameters
-): GraphDataPoint[] {
-    // This is kept for backward compatibility but not used in current simulations
-    return generatePendulumData(_problem, params)
-}
-
-// Keep backward compatibility
-export function generateProjectileData(v0: number, angle: number, g: number, mass: number): GraphDataPoint[] {
-    return generateKinematicsData(
-        { domain: ['kinematics'], objects: [], environment: { gravity: g, airResistance: false }, timeRange: [0, 'auto'], problemText: '' },
-        { initialVelocity: v0, angle, gravity: g, mass }
-    )
-}
-
-export function calculateMaxHeight(v0: number, angle: number, g: number): number {
-    const vy = v0 * Math.sin((angle * Math.PI) / 180)
-    return (vy * vy) / (2 * g)
-}
-
-export function calculateRange(v0: number, angle: number, g: number): number {
-    const angleRad = (angle * Math.PI) / 180
-    return (v0 * v0 * Math.sin(2 * angleRad)) / g
-}
-
-export function calculateTimeOfFlight(v0: number, angle: number, g: number): number {
-    const vy = v0 * Math.sin((angle * Math.PI) / 180)
-    return (2 * vy) / g
-}
-
-export function formatNumber(value: number): string {
-    return value.toFixed(2)
 }

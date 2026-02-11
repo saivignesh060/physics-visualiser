@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { GraphDataPoint, SimulationParameters } from '../types/types'
+import { SimulationType } from '../utils/physicsEngine'
 
 interface AnimationCanvasProps {
     graphData: GraphDataPoint[]
@@ -8,6 +9,7 @@ interface AnimationCanvasProps {
     currentTime: number
     onTimeUpdate: (time: number) => void
     parameters: SimulationParameters
+    simulationType: SimulationType
 }
 
 export default function AnimationCanvas({
@@ -17,10 +19,10 @@ export default function AnimationCanvas({
     currentTime,
     onTimeUpdate,
     parameters,
+    simulationType,
 }: AnimationCanvasProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const animationRef = useRef<number>()
-    const [scale, setScale] = useState(20)
 
     // Auto-play on data load
     useEffect(() => {
@@ -65,182 +67,38 @@ export default function AnimationCanvas({
         ctx.fillStyle = '#e0f2fe'
         ctx.fillRect(0, 0, width, height)
 
-        // Determine what to draw based on data pattern
-        const isDynamics = graphData.every(d => d.positionY >= 0 && d.accelerationY < 0 && Math.abs(d.accelerationY) < 5)
-        const isSpring = graphData.every(d => d.positionY === 0 && Math.abs(d.positionX) < 1)
-        const isPendulum = graphData.some(d => d.positionY < 0)
-
         // Find current data point
         const currentData = graphData.find(d => d.time >= currentTime) || graphData[0]
 
-        // Set origin and scale
-        let originX = width / 2
-        let originY = height - 50
-
-        if (isPendulum) {
-            // Pendulum: origin at top center
-            originX = width / 2
-            originY = 100
-            setScale(150) // Larger scale for pendulum
-        } else if (isSpring) {
-            // Spring: origin at center
-            originX = width / 2
-            originY = height / 2
-            setScale(200) // Large scale for spring oscillation
-        } else if (isDynamics) {
-            // Incline: origin at bottom left
-            originX = 100
-            originY = height - 100
-            setScale(30)
-        } else {
-            // Kinematics: origin at bottom left
-            originX = 100
-            originY = height - 50
-            setScale(20)
-        }
-
-        // Draw axes
-        ctx.strokeStyle = '#94a3b8'
-        ctx.lineWidth = 1
-        ctx.beginPath()
-        ctx.moveTo(0, originY)
-        ctx.lineTo(width, originY)
-        ctx.stroke()
-        ctx.beginPath()
-        ctx.moveTo(originX, 0)
-        ctx.lineTo(originX, height)
-        ctx.stroke()
-
-        // Draw trajectory
-        ctx.strokeStyle = '#60a5fa'
-        ctx.lineWidth = 2
-        ctx.beginPath()
-        graphData.forEach((point, i) => {
-            const x = originX + point.positionX * scale
-            const y = originY - point.positionY * scale
-            if (i === 0) ctx.moveTo(x, y)
-            else ctx.lineTo(x, y)
-        })
-        ctx.stroke()
-
-        // Draw object based on type
-        const x = originX + currentData.positionX * scale
-        const y = originY - currentData.positionY * scale
-
-        if (isPendulum) {
-            // Draw pendulum
-            const pivotX = originX
-            const pivotY = originY
-
-            // Pivot point
-            ctx.fillStyle = '#64748b'
-            ctx.beginPath()
-            ctx.arc(pivotX, pivotY, 5, 0, 2 * Math.PI)
-            ctx.fill()
-
-            // String
-            ctx.strokeStyle = '#475569'
-            ctx.lineWidth = 2
-            ctx.beginPath()
-            ctx.moveTo(pivotX, pivotY)
-            ctx.lineTo(x, y)
-            ctx.stroke()
-
-            // Bob
-            ctx.fillStyle = '#8b5cf6'
-            ctx.beginPath()
-            ctx.arc(x, y, 12, 0, 2 * Math.PI)
-            ctx.fill()
-            ctx.strokeStyle = '#6d28d9'
-            ctx.lineWidth = 2
-            ctx.stroke()
-        } else if (isSpring) {
-            // Draw spring
-            const springY = originY
-            const springLeft = originX - 100
-            const massX = x
-
-            // Fixed wall
-            ctx.strokeStyle = '#64748b'
-            ctx.lineWidth = 3
-            ctx.beginPath()
-            ctx.moveTo(springLeft - 10, springY - 30)
-            ctx.lineTo(springLeft - 10, springY + 30)
-            ctx.stroke()
-
-            // Spring coils
-            ctx.strokeStyle = '#10b981'
-            ctx.lineWidth = 2
-            ctx.beginPath()
-            ctx.moveTo(springLeft, springY)
-            const coils = 10
-            const springWidth = massX - springLeft - 20
-            for (let i = 0; i <= coils; i++) {
-                const coilX = springLeft + (springWidth / coils) * i
-                const coilY = springY + (i % 2 === 0 ? -10 : 10)
-                ctx.lineTo(coilX, coilY)
-            }
-            ctx.lineTo(massX - 20, springY)
-            ctx.stroke()
-
-            // Mass block
-            ctx.fillStyle = '#10b981'
-            ctx.fillRect(massX - 20, springY - 15, 40, 30)
-            ctx.strokeStyle = '#059669'
-            ctx.lineWidth = 2
-            ctx.strokeRect(massX - 20, springY - 15, 40, 30)
-        } else if (isDynamics) {
-            // Draw incline
-            const angle = (parameters.angle || 30) * Math.PI / 180
-            const inclineLength = 300
-
-            ctx.strokeStyle = '#94a3b8'
-            ctx.lineWidth = 3
-            ctx.beginPath()
-            ctx.moveTo(originX, originY)
-            ctx.lineTo(originX + inclineLength * Math.cos(angle), originY - inclineLength * Math.sin(angle))
-            ctx.stroke()
-
-            // Block on incline
-            ctx.fillStyle = '#3b82f6'
-            ctx.fillRect(x - 15, y - 15, 30, 30)
-            ctx.strokeStyle = '#1d4ed8'
-            ctx.lineWidth = 2
-            ctx.strokeRect(x - 15, y - 15, 30, 30)
-        } else {
-            // Projectile kinematics
-            ctx.fillStyle = '#f59e0b'
-            ctx.beginPath()
-            ctx.arc(x, y, 10, 0, 2 * Math.PI)
-            ctx.fill()
-
-            // Velocity vector
-            const vScale = 5
-            ctx.strokeStyle = '#10b981'
-            ctx.lineWidth = 2
-            ctx.beginPath()
-            ctx.moveTo(x, y)
-            ctx.lineTo(x + currentData.velocityX * vScale, y - currentData.velocityY * vScale)
-            ctx.stroke()
-
-            // Draw arrowhead
-            const vx = currentData.velocityX * vScale
-            const vy = -currentData.velocityY * vScale
-            const angle = Math.atan2(vy, vx)
-            ctx.beginPath()
-            ctx.moveTo(x + vx, y + vy)
-            ctx.lineTo(x + vx - 10 * Math.cos(angle - Math.PI / 6), y + vy - 10 * Math.sin(angle - Math.PI / 6))
-            ctx.moveTo(x + vx, y + vy)
-            ctx.lineTo(x + vx - 10 * Math.cos(angle + Math.PI / 6), y + vy - 10 * Math.sin(angle + Math.PI / 6))
-            ctx.stroke()
+        // Draw based on explicit simulation type
+        switch (simulationType) {
+            case 'pendulum':
+                drawPendulumScene(ctx, width, height, graphData, currentData, parameters)
+                break
+            case 'incline-friction':
+                drawInclineScene(ctx, width, height, graphData, currentData, parameters)
+                break
+            case 'friction-horizontal':
+                drawFrictionHorizontalScene(ctx, width, height, graphData, currentData, parameters)
+                break
+            case 'incline-pulley':
+                drawPulleyScene(ctx, width, height, graphData, currentData, parameters)
+                break
+            case 'conical-pendulum':
+                drawConicalPendulumScene(ctx, width, height, graphData, currentData, parameters)
+                break
+            default:
+                // Projectile, free fall, vertical projectile, uniform acceleration
+                drawProjectileScene(ctx, width, height, graphData, currentData, parameters)
+                break
         }
 
         // Time display
         ctx.fillStyle = '#1e293b'
-        ctx.font = '14px monospace'
-        ctx.fillText(`Time: ${currentData.time.toFixed(2)}s`, 10, 20)
+        ctx.font = 'bold 16px monospace'
+        ctx.fillText(`Time: ${currentData.time.toFixed(2)}s`, 10, 25)
 
-    }, [graphData, currentTime, scale, parameters])
+    }, [graphData, currentTime, simulationType, parameters])
 
     return (
         <div className="space-y-4">
@@ -261,4 +119,442 @@ export default function AnimationCanvas({
             />
         </div>
     )
+}
+
+// ==================== SCENE RENDERERS ====================
+
+function drawProjectileScene(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+    graphData: GraphDataPoint[],
+    currentData: GraphDataPoint,
+    _parameters: SimulationParameters
+) {
+    const originX = 100
+    const originY = height - 50
+    const scale = 20
+
+    // Draw ground
+    ctx.strokeStyle = '#64748b'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(0, originY)
+    ctx.lineTo(width, originY)
+    ctx.stroke()
+
+    // Draw trajectory
+    ctx.strokeStyle = '#60a5fa'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    graphData.forEach((point, i) => {
+        const x = originX + point.positionX * scale
+        const y = originY - point.positionY * scale
+        if (i === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+    })
+    ctx.stroke()
+
+    // Draw projectile
+    const x = originX + currentData.positionX * scale
+    const y = originY - currentData.positionY * scale
+
+    ctx.fillStyle = '#f59e0b'
+    ctx.beginPath()
+    ctx.arc(x, y, 12, 0, 2 * Math.PI)
+    ctx.fill()
+    ctx.strokeStyle = '#d97706'
+    ctx.lineWidth = 2
+    ctx.stroke()
+
+    // Velocity vector
+    const vScale = 5
+    ctx.strokeStyle = '#10b981'
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+    ctx.lineTo(x + currentData.velocityX * vScale, y - currentData.velocityY * vScale)
+    ctx.stroke()
+
+    // Arrowhead
+    const vx = currentData.velocityX * vScale
+    const vy = -currentData.velocityY * vScale
+    const angle = Math.atan2(vy, vx)
+    ctx.beginPath()
+    ctx.moveTo(x + vx, y + vy)
+    ctx.lineTo(x + vx - 10 * Math.cos(angle - Math.PI / 6), y + vy - 10 * Math.sin(angle - Math.PI / 6))
+    ctx.moveTo(x + vx, y + vy)
+    ctx.lineTo(x + vx - 10 * Math.cos(angle + Math.PI / 6), y + vy - 10 * Math.sin(angle + Math.PI / 6))
+    ctx.stroke()
+}
+
+function drawInclineScene(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+    graphData: GraphDataPoint[],
+    currentData: GraphDataPoint,
+    parameters: SimulationParameters
+) {
+    const originX = 100
+    const originY = height - 100
+    const scale = 40
+
+    const angleRad = ((parameters.inclineAngle || 30) * Math.PI) / 180
+    const inclineLength = 300
+
+    // Draw ground
+    ctx.fillStyle = '#cbd5e1'
+    ctx.fillRect(0, originY, width, height - originY)
+
+    // Draw incline (ramp)
+    ctx.fillStyle = '#94a3b8'
+    ctx.beginPath()
+    ctx.moveTo(originX, originY)
+    ctx.lineTo(originX + inclineLength * Math.cos(angleRad), originY - inclineLength * Math.sin(angleRad))
+    ctx.lineTo(originX + inclineLength * Math.cos(angleRad), originY)
+    ctx.closePath()
+    ctx.fill()
+
+    // Incline outline
+    ctx.strokeStyle = '#64748b'
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.moveTo(originX, originY)
+    ctx.lineTo(originX + inclineLength * Math.cos(angleRad), originY - inclineLength * Math.sin(angleRad))
+    ctx.stroke()
+
+    // Draw trajectory on incline
+    ctx.strokeStyle = '#60a5fa'
+    ctx.lineWidth = 2
+    ctx.setLineDash([5, 5])
+    ctx.beginPath()
+    graphData.forEach((point, i) => {
+        const x = originX + point.positionX * scale
+        const y = originY - point.positionY * scale
+        if (i === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+    })
+    ctx.stroke()
+    ctx.setLineDash([])
+
+    // Draw block
+    const x = originX + currentData.positionX * scale
+    const y = originY - currentData.positionY * scale
+
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(-angleRad) // Rotate block to match incline
+
+    ctx.fillStyle = '#3b82f6'
+    ctx.fillRect(-20, -20, 40, 40)
+    ctx.strokeStyle = '#1d4ed8'
+    ctx.lineWidth = 3
+    ctx.strokeRect(-20, -20, 40, 40)
+
+    // Label
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 14px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('m', 0, 5)
+
+    ctx.restore()
+}
+
+function drawFrictionHorizontalScene(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+    graphData: GraphDataPoint[],
+    currentData: GraphDataPoint,
+    _parameters: SimulationParameters
+) {
+    const originX = 100
+    const originY = height / 2
+    const scale = 50
+
+    // Draw ground
+    ctx.fillStyle = '#cbd5e1'
+    ctx.fillRect(0, originY + 20, width, height - originY - 20)
+
+    // Draw surface line
+    ctx.strokeStyle = '#64748b'
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.moveTo(0, originY + 20)
+    ctx.lineTo(width, originY + 20)
+    ctx.stroke()
+
+    // Draw trajectory line
+    ctx.strokeStyle = '#60a5fa'
+    ctx.lineWidth = 2
+    ctx.setLineDash([5, 5])
+    ctx.beginPath()
+    ctx.moveTo(originX, originY)
+    ctx.lineTo(originX + graphData[graphData.length - 1].positionX * scale, originY)
+    ctx.stroke()
+    ctx.setLineDash([])
+
+    // Draw box
+    const x = originX + currentData.positionX * scale
+    const y = originY
+
+    ctx.fillStyle = '#10b981'
+    ctx.fillRect(x - 25, y - 25, 50, 50)
+    ctx.strokeStyle = '#059669'
+    ctx.lineWidth = 3
+    ctx.strokeRect(x - 25, y - 25, 50, 50)
+
+    // Label
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 16px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('m', x, y + 5)
+
+    // Applied force arrow
+    if (currentData.accelerationX !== 0 || currentData.velocityX !== 0) {
+        ctx.strokeStyle = '#ef4444'
+        ctx.fillStyle = '#ef4444'
+        ctx.lineWidth = 3
+        ctx.beginPath()
+        ctx.moveTo(x - 25, y)
+        ctx.lineTo(x - 60, y)
+        ctx.stroke()
+
+        // Arrowhead
+        ctx.beginPath()
+        ctx.moveTo(x - 60, y)
+        ctx.lineTo(x - 50, y - 8)
+        ctx.lineTo(x - 50, y + 8)
+        ctx.closePath()
+        ctx.fill()
+
+        ctx.fillStyle = '#1e293b'
+        ctx.font = '12px sans-serif'
+        ctx.fillText('F', x - 70, y - 10)
+    }
+}
+
+function drawPendulumScene(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+    graphData: GraphDataPoint[],
+    currentData: GraphDataPoint,
+    _parameters: SimulationParameters
+) {
+    const originX = width / 2
+    const originY = 80
+    const scale = 150
+
+    // Draw ceiling
+    ctx.fillStyle = '#64748b'
+    ctx.fillRect(0, 0, width, 20)
+
+    // Draw ceiling attachment
+    ctx.fillStyle = '#475569'
+    ctx.fillRect(originX - 10, 20, 20, 60)
+
+    // Draw trajectory arc
+    ctx.strokeStyle = '#60a5fa'
+    ctx.lineWidth = 2
+    ctx.setLineDash([3, 3])
+    ctx.beginPath()
+    graphData.forEach((point, i) => {
+        const x = originX + point.positionX * scale
+        const y = originY - point.positionY * scale
+        if (i === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+    })
+    ctx.stroke()
+    ctx.setLineDash([])
+
+    // Current position
+    const x = originX + currentData.positionX * scale
+    const y = originY - currentData.positionY * scale
+
+    // Draw string
+    ctx.strokeStyle = '#475569'
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.moveTo(originX, originY)
+    ctx.lineTo(x, y)
+    ctx.stroke()
+
+    // Draw pivot point
+    ctx.fillStyle = '#64748b'
+    ctx.beginPath()
+    ctx.arc(originX, originY, 6, 0, 2 * Math.PI)
+    ctx.fill()
+
+    // Draw bob
+    ctx.fillStyle = '#8b5cf6'
+    ctx.beginPath()
+    ctx.arc(x, y, 16, 0, 2 * Math.PI)
+    ctx.fill()
+    ctx.strokeStyle = '#6d28d9'
+    ctx.lineWidth = 3
+    ctx.stroke()
+
+    // Label
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 14px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('m', x, y + 5)
+}
+
+function drawPulleyScene(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+    graphData: GraphDataPoint[],
+    currentData: GraphDataPoint,
+    parameters: SimulationParameters
+) {
+    const originX = 100
+    const originY = height - 100
+    const scale = 40
+
+    const angleRad = ((parameters.inclineAngle || 30) * Math.PI) / 180
+    const inclineLength = 300
+
+    // Draw ground
+    ctx.fillStyle = '#cbd5e1'
+    ctx.fillRect(0, originY, width, height - originY)
+
+    // Draw incline
+    ctx.fillStyle = '#94a3b8'
+    ctx.beginPath()
+    ctx.moveTo(originX, originY)
+    ctx.lineTo(originX + inclineLength * Math.cos(angleRad), originY - inclineLength * Math.sin(angleRad))
+    ctx.lineTo(originX + inclineLength * Math.cos(angleRad), originY)
+    ctx.closePath()
+    ctx.fill()
+
+    ctx.strokeStyle = '#64748b'
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.moveTo(originX, originY)
+    ctx.lineTo(originX + inclineLength * Math.cos(angleRad), originY - inclineLength * Math.sin(angleRad))
+    ctx.stroke()
+
+    // Block on incline (m1)
+    const x1 = originX + currentData.positionX * scale
+    const y1 = originY - currentData.positionY * scale
+
+    ctx.save()
+    ctx.translate(x1, y1)
+    ctx.rotate(-angleRad)
+
+    ctx.fillStyle = '#3b82f6'
+    ctx.fillRect(-20, -20, 40, 40)
+    ctx.strokeStyle = '#1d4ed8'
+    ctx.lineWidth = 3
+    ctx.strokeRect(-20, -20, 40, 40)
+
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 12px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('m₁', 0, 5)
+
+    ctx.restore()
+
+    // Pulley at top of incline
+    const pulleyX = originX + inclineLength * Math.cos(angleRad)
+    const pulleyY = originY - inclineLength * Math.sin(angleRad)
+
+    ctx.fillStyle = '#fbbf24'
+    ctx.beginPath()
+    ctx.arc(pulleyX, pulleyY, 15, 0, 2 * Math.PI)
+    ctx.fill()
+    ctx.strokeStyle = '#f59e0b'
+    ctx.lineWidth = 2
+    ctx.stroke()
+
+    // String from m1 to pulley
+    ctx.strokeStyle = '#475569'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(x1, y1)
+    ctx.lineTo(pulleyX, pulleyY)
+    ctx.stroke()
+
+    // Hanging mass (m2)
+    const m2Y = pulleyY + (currentData.positionX * scale)
+
+    // String from pulley to m2
+    ctx.beginPath()
+    ctx.moveTo(pulleyX, pulleyY)
+    ctx.lineTo(pulleyX, m2Y)
+    ctx.stroke()
+
+    // Draw m2
+    ctx.fillStyle = '#ef4444'
+    ctx.fillRect(pulleyX - 20, m2Y - 20, 40, 40)
+    ctx.strokeStyle = '#dc2626'
+    ctx.lineWidth = 3
+    ctx.strokeRect(pulleyX - 20, m2Y - 20, 40, 40)
+
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 12px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('m₂', pulleyX, m2Y + 5)
+}
+
+function drawConicalPendulumScene(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+    graphData: GraphDataPoint[],
+    currentData: GraphDataPoint,
+    _parameters: SimulationParameters
+) {
+    const originX = width / 2
+    const originY = 80
+    const scale = 150
+
+    // Draw ceiling
+    ctx.fillStyle = '#64748b'
+    ctx.fillRect(0, 0, width, 20)
+
+    // Draw ceiling attachment
+    ctx.fillStyle = '#475569'
+    ctx.fillRect(originX - 10, 20, 20, 60)
+
+    // Draw circular path
+    const radius = Math.sqrt(currentData.positionX ** 2 + (currentData.positionY - originY / scale) ** 2) * scale
+    ctx.strokeStyle = '#60a5fa'
+    ctx.lineWidth = 2
+    ctx.setLineDash([5, 5])
+    ctx.beginPath()
+    ctx.arc(originX, originY - currentData.positionY * scale, radius, 0, 2 * Math.PI)
+    ctx.stroke()
+    ctx.setLineDash([])
+
+    // Current position
+    const x = originX + currentData.positionX * scale
+    const y = originY - currentData.positionY * scale
+
+    // Draw string
+    ctx.strokeStyle = '#475569'
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.moveTo(originX, originY)
+    ctx.lineTo(x, y)
+    ctx.stroke()
+
+    // Draw pivot
+    ctx.fillStyle = '#64748b'
+    ctx.beginPath()
+    ctx.arc(originX, originY, 6, 0, 2 * Math.PI)
+    ctx.fill()
+
+    // Draw bob
+    ctx.fillStyle = '#8b5cf6'
+    ctx.beginPath()
+    ctx.arc(x, y, 16, 0, 2 * Math.PI)
+    ctx.fill()
+    ctx.strokeStyle = '#6d28d9'
+    ctx.lineWidth = 3
+    ctx.stroke()
 }

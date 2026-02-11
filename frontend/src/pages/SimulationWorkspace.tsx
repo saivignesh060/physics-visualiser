@@ -4,8 +4,9 @@ import SimulationBrowser from '../components/SimulationBrowser'
 import AnimationCanvas from '../components/AnimationCanvas'
 import GraphDashboard from '../components/GraphDashboard'
 import ControlPanel from '../components/ControlPanel'
+import Chatbot from '../components/Chatbot'
 import { PhysicsProblem, SimulationParameters, GraphDataPoint, SimulationTemplate } from '../types/types'
-import { generateSimulationData } from '../utils/physicsEngine'
+import { generateSimulationData, getSimulationType } from '../utils/physicsEngine'
 
 export default function SimulationWorkspace() {
     const [currentView, setCurrentView] = useState<'input' | 'browser' | 'simulation'>('input')
@@ -145,6 +146,7 @@ export default function SimulationWorkspace() {
                                     currentTime={currentTime}
                                     onTimeUpdate={setCurrentTime}
                                     parameters={parameters}
+                                    simulationType={getSimulationType(problem, parameters)}
                                 />
                             </div>
 
@@ -173,6 +175,11 @@ export default function SimulationWorkspace() {
                     <div className="physics-card bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200">
                         <h3 className="text-lg font-semibold text-blue-900 mb-2">📚 Physics Explanation</h3>
                         <p className="text-blue-800">{simulation.explanation}</p>
+                    </div>
+
+                    {/* Chatbot Widget */}
+                    <div className="fixed bottom-4 right-4 z-50">
+                        <Chatbot problem={problem} parameters={parameters} />
                     </div>
                 </>
             )}
