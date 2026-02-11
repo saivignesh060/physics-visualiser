@@ -101,4 +101,5 @@ export interface SimulationTemplate {
     }[]
     explanation: string
     objectType: 'point_mass' | 'block' | 'pendulum'
+    matchReason?: string
 }

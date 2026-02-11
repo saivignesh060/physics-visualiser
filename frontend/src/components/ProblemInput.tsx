@@ -103,7 +103,7 @@ export default function ProblemInput({ onSimulationSelected, onBrowseClick }: Pr
                                     ✓ Matched: {matchedSimulation.name}
                                 </h3>
                                 <p className="text-sm text-green-700 mt-1">
-                                    {matchedSimulation.description}
+                                    {matchedSimulation.matchReason || matchedSimulation.description}
                                 </p>
                             </div>
                             <span className={`text-xs px-3 py-1 rounded-full ${matchedSimulation.domain === 'kinematics'

@@ -13,11 +13,27 @@ router.post('/match-simulation', async (req, res) => {
             return res.status(400).json({ error: 'Query text is required' })
         }
 
-        const simulation = matchSimulation(query)
-        res.json({ simulation })
+        const simulations = getAllSimulations()
+
+        // Use Gemini to match
+        const { findBestSimulationMatch } = await import('../services/geminiService.js')
+        const matchResult = await findBestSimulationMatch(query, simulations)
+
+        const simulation = simulations.find(s => s.id === matchResult.simulationId) || simulations[0]
+
+        // Attach AI reason
+        const responseSimulation = {
+            ...simulation,
+            matchReason: matchResult.reason
+        }
+
+        res.json({ simulation: responseSimulation })
     } catch (error: any) {
         console.error('Match simulation error:', error)
-        res.status(500).json({ error: 'Failed to match simulation', message: error.message })
+        // Fallback to static matching if AI fails completely (though service handles errors)
+        const { matchSimulation } = await import('../utils/matcher.js')
+        const simulation = matchSimulation(query)
+        res.json({ simulation })
     }
 })
 
