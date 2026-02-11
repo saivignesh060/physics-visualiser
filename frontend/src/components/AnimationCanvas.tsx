@@ -466,8 +466,9 @@ function drawPulleyScene(
 
     ctx.restore()
 
-    // Pulley at top of incline
-    const pulleyX = originX + inclineLength * Math.cos(angleRad)
+    // Pulley at top of incline (offset slightly to hang off edge)
+    const pulleyOffset = 20
+    const pulleyX = originX + inclineLength * Math.cos(angleRad) + pulleyOffset
     const pulleyY = originY - inclineLength * Math.sin(angleRad)
 
     ctx.fillStyle = '#fbbf24'
@@ -479,11 +480,15 @@ function drawPulleyScene(
     ctx.stroke()
 
     // String from m1 to pulley
+    const rampTopX = originX + inclineLength * Math.cos(angleRad)
+    const rampTopY = originY - inclineLength * Math.sin(angleRad)
+
     ctx.strokeStyle = '#475569'
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.moveTo(x1, y1)
-    ctx.lineTo(pulleyX, pulleyY)
+    ctx.lineTo(rampTopX, rampTopY) // To corner
+    ctx.lineTo(pulleyX, pulleyY)   // To pulley
     ctx.stroke()
 
     // Hanging mass (m2)

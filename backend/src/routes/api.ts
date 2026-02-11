@@ -6,9 +6,10 @@ const router = Router()
 
 // Match simulation from query text
 router.post('/match-simulation', async (req, res) => {
-    try {
-        const { query } = req.body
+    // Define query inside the function scope so it's available everywhere
+    const { query } = req.body
 
+    try {
         if (!query) {
             return res.status(400).json({ error: 'Query text is required' })
         }
@@ -30,10 +31,17 @@ router.post('/match-simulation', async (req, res) => {
         res.json({ simulation: responseSimulation })
     } catch (error: any) {
         console.error('Match simulation error:', error)
-        // Fallback to static matching if AI fails completely (though service handles errors)
+        // Fallback to static matching if AI fails
         const { matchSimulation } = await import('../utils/matcher.js')
-        const simulation = matchSimulation(query)
-        res.json({ simulation })
+        // query is available here because it was destructured from req.body outside the try block
+        // However, if req.body is undefined, this would throw before. But middleware ensures req.body exists.
+        // To be safe, we use the query variable we defined.
+        if (typeof query === 'string') {
+            const simulation = matchSimulation(query)
+            res.json({ simulation })
+        } else {
+            res.status(500).json({ error: 'Failed to match simulation', message: error.message })
+        }
     }
 })
 
