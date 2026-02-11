@@ -29,7 +29,7 @@ export const SIMULATION_LIBRARY: SimulationTemplate[] = [
         name: 'Projectile Motion',
         description: 'A ball is thrown at an angle with initial velocity',
         domain: 'kinematics',
-        keywords: ['projectile', 'ball', 'thrown', 'angle', 'trajectory', 'parabola', 'launch'],
+        keywords: ['projectile', 'ball', 'thrown', 'angle', 'trajectory', 'parabola', 'launch', 'projected', 'projection', 'particle', 'shot', 'fired', 'radius', 'curvature', 'range', 'height'],
         defaultParameters: {
             initialVelocity: 15,
             angle: 45,
