@@ -78,7 +78,7 @@ function generateDynamicsData(
 
     // Check if it's a friction horizontal simulation (has tension parameter)
     if (params.tension !== undefined) {
-        return generateFrictionHorizontalData(problem, params)
+        return generateFrictionHorizontalData(_problem, params)
     }
 
     // Otherwise, it's an inclined plane simulation
@@ -205,7 +205,7 @@ function generateEnergyData(
     params: SimulationParameters
 ): GraphDataPoint[] {
     const data: GraphDataPoint[] = []
-    const obj = problem.objects[0]
+    const obj = _problem.objects[0]
     const metadata = obj.metadata || {}
 
     const k = (metadata.springConstant as number) || 100
@@ -308,11 +308,11 @@ function generatePendulumData(
 }
 
 function generateWavesData(
-    problem: PhysicsProblem,
+    _problem: PhysicsProblem,
     params: SimulationParameters
 ): GraphDataPoint[] {
     // This is kept for backward compatibility but not used in current simulations
-    return generatePendulumData(problem, params)
+    return generatePendulumData(_problem, params)
 }
 
 // Keep backward compatibility
