@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { SimulationTemplate } from '../types/types'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 interface SimulationBrowserProps {
     onSelectSimulation: (simulation: SimulationTemplate) => void
 }
@@ -16,7 +18,7 @@ export default function SimulationBrowser({ onSelectSimulation }: SimulationBrow
 
     const fetchSimulations = async () => {
         try {
-            const response = await fetch('http://localhost:3000/api/simulations')
+            const response = await fetch(`${API_BASE_URL}/api/simulations`)
             const data = await response.json()
             setSimulations(data.simulations)
         } catch (error) {

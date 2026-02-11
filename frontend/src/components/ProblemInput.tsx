@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { SimulationTemplate } from '../types/types'
 import VoiceInput from './VoiceInput'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 interface ProblemInputProps {
     onSimulationSelected: (simulation: SimulationTemplate) => void
     onBrowseClick: () => void
@@ -30,7 +32,7 @@ export default function ProblemInput({ onSimulationSelected, onBrowseClick }: Pr
         setMatchedSimulation(null)
 
         try {
-            const response = await fetch('http://localhost:3000/api/match-simulation', {
+            const response = await fetch(`${API_BASE_URL}/api/match-simulation`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ query }),
@@ -105,8 +107,8 @@ export default function ProblemInput({ onSimulationSelected, onBrowseClick }: Pr
                                 </p>
                             </div>
                             <span className={`text-xs px-3 py-1 rounded-full ${matchedSimulation.domain === 'kinematics'
-                                    ? 'bg-blue-100 text-blue-700'
-                                    : 'bg-green-100 text-green-700'
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-green-100 text-green-700'
                                 }`}>
                                 {matchedSimulation.domain}
                             </span>
