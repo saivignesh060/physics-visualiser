@@ -425,11 +425,10 @@ function drawPulleyScene(
     const angleRad = ((parameters.inclineAngle || 30) * Math.PI) / 180
     const inclineLength = 300
 
-    // Draw ground
+    // 1. Draw Ground & Incline
     ctx.fillStyle = '#cbd5e1'
     ctx.fillRect(0, originY, width, height - originY)
 
-    // Draw incline
     ctx.fillStyle = '#94a3b8'
     ctx.beginPath()
     ctx.moveTo(originX, originY)
@@ -437,44 +436,24 @@ function drawPulleyScene(
     ctx.lineTo(originX + inclineLength * Math.cos(angleRad), originY)
     ctx.closePath()
     ctx.fill()
-
     ctx.strokeStyle = '#64748b'
     ctx.lineWidth = 3
-    ctx.beginPath()
-    ctx.moveTo(originX, originY)
-    ctx.lineTo(originX + inclineLength * Math.cos(angleRad), originY - inclineLength * Math.sin(angleRad))
     ctx.stroke()
 
-    // Block on incline (m1)
-    const x1 = originX + currentData.positionX * scale
-    const y1 = originY - currentData.positionY * scale
+    // 2. Calculate Positions
+    const rampTipX = originX + inclineLength * Math.cos(angleRad)
+    const rampTipY = originY - inclineLength * Math.sin(angleRad)
 
-    ctx.save()
-    ctx.translate(x1, y1)
-    ctx.rotate(-angleRad)
-
-    ctx.fillStyle = '#3b82f6'
-    ctx.fillRect(-20, -20, 40, 40)
-    ctx.strokeStyle = '#1d4ed8'
-    ctx.lineWidth = 3
-    ctx.strokeRect(-20, -20, 40, 40)
-
-    ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 12px sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText('m₁', 0, 5)
-
-    ctx.restore()
-
-    // Pulley Position
     const pulleyExtension = 40
     const pulleyX = originX + (inclineLength + pulleyExtension) * Math.cos(angleRad)
     const pulleyY = originY - (inclineLength + pulleyExtension) * Math.sin(angleRad)
-    const rampTipX = originX + inclineLength * Math.cos(angleRad)
-    const rampTipY = originY - inclineLength * Math.sin(angleRad)
+
+    const x1 = originX + currentData.positionX * scale
+    const y1 = originY - currentData.positionY * scale
+
     const m2Y = pulleyY + (currentData.positionX * scale)
 
-    // Layer 1: Structural Bracket (Back)
+    // 3. Draw Bracket (Structural Support) - Back Layer
     ctx.strokeStyle = '#475569'
     ctx.lineWidth = 14
     ctx.lineCap = 'round'
@@ -484,19 +463,35 @@ function drawPulleyScene(
     ctx.stroke()
     ctx.lineCap = 'butt' // Reset
 
-    // Layer 2: Strings (Middle)
-    ctx.strokeStyle = '#475569'
+    // 4. Draw Strings (Middle Layer)
+    ctx.strokeStyle = '#334155'
     ctx.lineWidth = 2
     ctx.beginPath()
-    // String from m1
+    // String 1: Block to Pulley
     ctx.moveTo(x1, y1)
     ctx.lineTo(pulleyX, pulleyY)
-    // String to m2
+    // String 2: Pulley to Hanging Mass
     ctx.moveTo(pulleyX, pulleyY)
     ctx.lineTo(pulleyX, m2Y)
     ctx.stroke()
 
-    // Layer 3: Pulley Wheel & Rim (Front)
+    // 5. Draw Block m1 (Corrected Offset)
+    ctx.save()
+    ctx.translate(x1, y1)
+    ctx.rotate(-angleRad)
+    // Draw "sitting on" the line (shift Y by -height)
+    ctx.fillStyle = '#3b82f6'
+    ctx.fillRect(-20, -40, 40, 40)
+    ctx.strokeStyle = '#1d4ed8'
+    ctx.lineWidth = 3
+    ctx.strokeRect(-20, -40, 40, 40)
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 12px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('m₁', 0, -15)
+    ctx.restore()
+
+    // 6. Draw Pulley Wheel (Front Layer)
     ctx.fillStyle = '#fbbf24'
     ctx.beginPath()
     ctx.arc(pulleyX, pulleyY, 15, 0, 2 * Math.PI)
@@ -505,19 +500,18 @@ function drawPulleyScene(
     ctx.lineWidth = 2
     ctx.stroke()
 
-    // Layer 4: Axle
-    ctx.fillStyle = '#78350f'
+    // 7. Draw Axle
+    ctx.fillStyle = '#713f12'
     ctx.beginPath()
     ctx.arc(pulleyX, pulleyY, 4, 0, 2 * Math.PI)
     ctx.fill()
 
-    // Layer 5: Hanging Mass
+    // 8. Draw Hanging Mass m2
     ctx.fillStyle = '#ef4444'
     ctx.fillRect(pulleyX - 20, m2Y - 20, 40, 40)
     ctx.strokeStyle = '#dc2626'
     ctx.lineWidth = 3
     ctx.strokeRect(pulleyX - 20, m2Y - 20, 40, 40)
-
     ctx.fillStyle = '#ffffff'
     ctx.font = 'bold 12px sans-serif'
     ctx.textAlign = 'center'

@@ -464,7 +464,7 @@ function generateInclinePulleyData(params: SimulationParameters): GraphDataPoint
 
         // Position of m1 on incline
         const x1 = s * Math.cos(angleRad)
-        const y1 = -s * Math.sin(angleRad)
+        const y1 = s * Math.sin(angleRad)
 
         // Position of m2 (hanging) - for future 3D visualization
 
