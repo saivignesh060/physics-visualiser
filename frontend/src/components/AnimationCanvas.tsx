@@ -267,7 +267,7 @@ function drawFrictionHorizontalScene(
     height: number,
     graphData: GraphDataPoint[],
     currentData: GraphDataPoint,
-    _parameters: SimulationParameters
+    parameters: SimulationParameters
 ) {
     const originX = 100
     const originY = height / 2
@@ -514,7 +514,7 @@ function drawConicalPendulumScene(
     _height: number,
     _graphData: GraphDataPoint[],
     currentData: GraphDataPoint,
-    parameters: SimulationParameters
+    _parameters: SimulationParameters
 ) {
     const originX = width / 2
     const originY = 80
