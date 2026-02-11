@@ -312,26 +312,33 @@ function drawFrictionHorizontalScene(
     ctx.fillText('m', x, y + 5)
 
     // Applied force arrow
-    if (currentData.accelerationX !== 0 || currentData.velocityX !== 0) {
+    const appliedForce = parameters.appliedForce ?? 15
+    if (Math.abs(appliedForce) > 0) {
+        const direction = Math.sign(appliedForce)
+        const arrowLength = 40
+        const startX = x + (direction * 25) // Start from edge of box
+        const endX = startX + (direction * arrowLength)
+
         ctx.strokeStyle = '#ef4444'
         ctx.fillStyle = '#ef4444'
         ctx.lineWidth = 3
         ctx.beginPath()
-        ctx.moveTo(x - 25, y)
-        ctx.lineTo(x - 60, y)
+        ctx.moveTo(startX, y)
+        ctx.lineTo(endX, y)
         ctx.stroke()
 
         // Arrowhead
         ctx.beginPath()
-        ctx.moveTo(x - 60, y)
-        ctx.lineTo(x - 50, y - 8)
-        ctx.lineTo(x - 50, y + 8)
+        ctx.moveTo(endX, y)
+        ctx.lineTo(endX - (direction * 10), y - 6)
+        ctx.lineTo(endX - (direction * 10), y + 6)
         ctx.closePath()
         ctx.fill()
 
+        // Label
         ctx.fillStyle = '#1e293b'
         ctx.font = '12px sans-serif'
-        ctx.fillText('F', x - 70, y - 10)
+        ctx.fillText('F', endX + (direction * 10), y - 10)
     }
 }
 
