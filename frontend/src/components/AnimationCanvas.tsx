@@ -466,48 +466,52 @@ function drawPulleyScene(
 
     ctx.restore()
 
-    // Pulley at top of incline (extended along the incline vector)
-    const pulleyExtension = 40 // Pixel distance to extend past the ramp tip
+    // Pulley Position
+    const pulleyExtension = 40
     const pulleyX = originX + (inclineLength + pulleyExtension) * Math.cos(angleRad)
     const pulleyY = originY - (inclineLength + pulleyExtension) * Math.sin(angleRad)
-
-    // Draw bracket connecting ramp to pulley
     const rampTipX = originX + inclineLength * Math.cos(angleRad)
     const rampTipY = originY - inclineLength * Math.sin(angleRad)
+    const m2Y = pulleyY + (currentData.positionX * scale)
 
-    ctx.strokeStyle = '#64748b'
-    ctx.lineWidth = 4
+    // Layer 1: Structural Bracket (Back)
+    ctx.strokeStyle = '#475569'
+    ctx.lineWidth = 14
+    ctx.lineCap = 'round'
     ctx.beginPath()
     ctx.moveTo(rampTipX, rampTipY)
     ctx.lineTo(pulleyX, pulleyY)
     ctx.stroke()
+    ctx.lineCap = 'butt' // Reset
 
-    ctx.fillStyle = '#fbbf24'
-    ctx.beginPath()
-    ctx.arc(pulleyX, pulleyY, 15, 0, 2 * Math.PI)
-    ctx.fill()
-    ctx.strokeStyle = '#f59e0b'
-    ctx.lineWidth = 2
-    ctx.stroke()
-
-    // String from m1 to pulley
+    // Layer 2: Strings (Middle)
     ctx.strokeStyle = '#475569'
     ctx.lineWidth = 2
     ctx.beginPath()
+    // String from m1
     ctx.moveTo(x1, y1)
     ctx.lineTo(pulleyX, pulleyY)
-    ctx.stroke()
-
-    // Hanging mass (m2)
-    const m2Y = pulleyY + (currentData.positionX * scale)
-
-    // String from pulley to m2
-    ctx.beginPath()
+    // String to m2
     ctx.moveTo(pulleyX, pulleyY)
     ctx.lineTo(pulleyX, m2Y)
     ctx.stroke()
 
-    // Draw m2
+    // Layer 3: Pulley Wheel & Rim (Front)
+    ctx.fillStyle = '#fbbf24'
+    ctx.beginPath()
+    ctx.arc(pulleyX, pulleyY, 15, 0, 2 * Math.PI)
+    ctx.fill()
+    ctx.strokeStyle = '#d97706'
+    ctx.lineWidth = 2
+    ctx.stroke()
+
+    // Layer 4: Axle
+    ctx.fillStyle = '#78350f'
+    ctx.beginPath()
+    ctx.arc(pulleyX, pulleyY, 4, 0, 2 * Math.PI)
+    ctx.fill()
+
+    // Layer 5: Hanging Mass
     ctx.fillStyle = '#ef4444'
     ctx.fillRect(pulleyX - 20, m2Y - 20, 40, 40)
     ctx.strokeStyle = '#dc2626'
