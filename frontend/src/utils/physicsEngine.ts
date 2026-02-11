@@ -26,7 +26,7 @@ export function generateSimulationData(
 }
 
 function generateKinematicsData(
-    problem: PhysicsProblem,
+    _problem: PhysicsProblem,
     params: SimulationParameters
 ): GraphDataPoint[] {
     const data: GraphDataPoint[] = []
@@ -71,7 +71,7 @@ function generateKinematicsData(
 }
 
 function generateDynamicsData(
-    problem: PhysicsProblem,
+    _problem: PhysicsProblem,
     params: SimulationParameters
 ): GraphDataPoint[] {
     const data: GraphDataPoint[] = []
@@ -201,7 +201,7 @@ function generateFrictionHorizontalData(
 }
 
 function generateEnergyData(
-    problem: PhysicsProblem,
+    _problem: PhysicsProblem,
     params: SimulationParameters
 ): GraphDataPoint[] {
     const data: GraphDataPoint[] = []

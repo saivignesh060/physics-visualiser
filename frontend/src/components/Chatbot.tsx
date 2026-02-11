@@ -6,7 +6,7 @@ interface ChatbotProps {
     parameters: SimulationParameters
 }
 
-export default function Chatbot({ problem, parameters }: ChatbotProps) {
+export default function Chatbot({ problem: _problem, parameters }: ChatbotProps) {
     const [messages, setMessages] = useState<ChatMessage[]>([
         {
             id: '1',
@@ -113,8 +113,8 @@ export default function Chatbot({ problem, parameters }: ChatbotProps) {
                     >
                         <div
                             className={`max-w-[80%] px-4 py-2 rounded-lg ${message.role === 'user'
-                                    ? 'bg-primary-600 text-white'
-                                    : 'bg-white border border-gray-200 text-gray-800'
+                                ? 'bg-primary-600 text-white'
+                                : 'bg-white border border-gray-200 text-gray-800'
                                 }`}
                         >
                             <p className="text-sm whitespace-pre-wrap">{message.content}</p>
