@@ -250,68 +250,83 @@ function generateConicalPendulumData(params: SimulationParameters): GraphDataPoi
 }
 
 // ==================== INCLINED PLANE WITH FRICTION ====================
+// ==================== INCLINED PLANE WITH FRICTION ====================
 function generateInclineFrictionData(params: SimulationParameters): GraphDataPoint[] {
     const data: GraphDataPoint[] = []
     const g = params.gravity || 9.8
     const mass = params.mass || 1
     const angleRad = ((params.inclineAngle || 30) * Math.PI) / 180
     const muK = params.frictionCoefficient || 0.3
-    const muS = muK * 1.2 // Static friction slightly higher
-    const direction = params.direction || 1 // 1 = down, -1 = up
+    const muS = muK * 1.2
+
+    // Direction: 1 = Sliding Down (starts at top), -1 = Sliding Up (starts at bottom)
+    const direction = params.direction || 1
+    const inclineLength = 7.5 // Matches 300px visual length at 40px/m scale
     const dt = 0.02
 
+    // Coordinate System: s = distance from BOTTOM of incline (0 to inclineLength)
+    // Positive s = UP the incline
+    // Negative s = Below ground (stop)
+
     // Initial conditions
-    let s = 0 // Distance along incline
-    let v = 0 // Velocity along incline
+    let s = direction === 1 ? inclineLength : 0
+    let v = direction === 1 ? 0 : 8 // If sliding up, give initial velocity
     let t = 0
     const maxTime = 10
-    const inclineLength = 5
 
-    // Forces
+    // Force Components (Fixed coordinates)
+    // Gravity acts DOWN the slope (negative s direction)
+    const gravityForce = -mass * g * Math.sin(angleRad)
     const normalForce = mass * g * Math.cos(angleRad)
-    const gravityParallel = mass * g * Math.sin(angleRad)
 
-    // Semi-Implicit Euler
-    while (t < maxTime && Math.abs(s) < inclineLength) {
+    while (t < maxTime && s >= 0 && s <= inclineLength + 0.5) {
         let a = 0
+        const isMoving = Math.abs(v) > 0.001
 
-        // Check if moving or static
-        if (Math.abs(v) < 0.001) {
-            // Static friction case
+        if (!isMoving) {
+            // Static friction check
             const maxStaticFriction = muS * normalForce
 
-            if (Math.abs(gravityParallel) <= maxStaticFriction) {
-                // Block sticks
+            // Gravity pulls DOWN (-). We check if gravity overcomes static friction.
+            // Force trying to move block is Gravity.
+            if (Math.abs(gravityForce) <= maxStaticFriction) {
+                // Stays still
                 a = 0
                 v = 0
             } else {
-                // Overcome static friction, start moving
-                const frictionForce = muK * normalForce
-                const netForce = direction * gravityParallel - Math.sign(direction) * frictionForce
+                // Starts moving (Gravity pulls down, so v becomes negative)
+                // Kinetic friction opposes motion (opposes gravity)
+                // Friction acts UP (+)
+                const kineticFriction = muK * normalForce
+                // Net = Gravity (-) + Friction (+)
+                const netForce = gravityForce + kineticFriction
                 a = netForce / mass
             }
         } else {
             // Kinetic friction opposes velocity
-            const frictionForce = muK * normalForce
-            const frictionDirection = -Math.sign(v)
-            const netForce = direction * gravityParallel + frictionDirection * frictionForce
+            const kineticFriction = muK * normalForce
+            const frictionDirection = -Math.sign(v) // If v > 0 (up), f < 0 (down). If v < 0 (down), f > 0 (up).
+
+            const netForce = gravityForce + frictionDirection * kineticFriction
             a = netForce / mass
         }
 
-        // Update velocity and position
+        // Euler Integration
         v += a * dt
         s += v * dt
 
-        // Convert to Cartesian coordinates
+        // Convert to Cartesian (Origin at Bottom-Left of incline)
+        // x = s * cos(theta)
+        // y = s * sin(theta)
         const x = s * Math.cos(angleRad)
-        const y = direction > 0 ? -s * Math.sin(angleRad) : s * Math.sin(angleRad)
+        const y = s * Math.sin(angleRad)
 
         const vx = v * Math.cos(angleRad)
-        const vy = direction > 0 ? -v * Math.sin(angleRad) : v * Math.sin(angleRad)
+        const vy = v * Math.sin(angleRad)
 
         const speed = Math.abs(v)
         const ke = 0.5 * mass * speed * speed
-        const pe = mass * g * Math.abs(y)
+        const pe = mass * g * y // height is y
 
         data.push({
             time: t,
@@ -320,18 +335,13 @@ function generateInclineFrictionData(params: SimulationParameters): GraphDataPoi
             velocityX: vx,
             velocityY: vy,
             accelerationX: a * Math.cos(angleRad),
-            accelerationY: direction > 0 ? -a * Math.sin(angleRad) : a * Math.sin(angleRad),
+            accelerationY: a * Math.sin(angleRad),
             kineticEnergy: ke,
             potentialEnergy: pe,
             totalEnergy: ke + pe,
         })
 
         t += dt
-
-        // Stop if velocity becomes zero and can't overcome static friction
-        if (Math.abs(v) < 0.001 && Math.abs(gravityParallel) <= muS * normalForce) {
-            break
-        }
     }
 
     return data
