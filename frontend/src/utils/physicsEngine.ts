@@ -132,7 +132,7 @@ function generateDynamicsData(
 }
 
 function generateFrictionHorizontalData(
-    problem: PhysicsProblem,
+    _problem: PhysicsProblem,
     params: SimulationParameters
 ): GraphDataPoint[] {
     const data: GraphDataPoint[] = []
@@ -249,7 +249,7 @@ function generateEnergyData(
 
 
 function generatePendulumData(
-    problem: PhysicsProblem,
+    _problem: PhysicsProblem,
     params: SimulationParameters
 ): GraphDataPoint[] {
     const data: GraphDataPoint[] = []
