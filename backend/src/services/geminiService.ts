@@ -139,6 +139,47 @@ Generate the complete simulation JSON:`
     }
 }
 
+function getBestStaticMatchId(query: string, availableSimulations: any[]): string {
+    const normalizedQuery = query.toLowerCase()
+    const queryTokens = normalizedQuery
+        .replace(/[^\w\s]/g, ' ')
+        .split(/\s+/)
+        .filter(token => token.length > 2)
+
+    if (availableSimulations.length === 0) {
+        return 'projectile-motion'
+    }
+
+    let bestId = availableSimulations[0].id
+    let bestScore = -1
+
+    for (const simulation of availableSimulations) {
+        let score = 0
+        const name = String(simulation.name || '').toLowerCase()
+        const description = String(simulation.description || '').toLowerCase()
+        const keywords = Array.isArray(simulation.keywords)
+            ? simulation.keywords.map((k: string) => k.toLowerCase())
+            : []
+
+        for (const token of queryTokens) {
+            if (name.includes(token)) score += 2
+            if (description.includes(token)) score += 1
+            for (const keyword of keywords) {
+                if (keyword.includes(token) || token.includes(keyword)) {
+                    score += 2
+                }
+            }
+        }
+
+        if (score > bestScore) {
+            bestScore = score
+            bestId = simulation.id
+        }
+    }
+
+    return bestId
+}
+
 /**
  * Find best matching simulation using Gemini
  */
@@ -152,7 +193,10 @@ export async function findBestSimulationMatch(
 
         if (!apiKey) {
             console.warn('GEMINI_API_KEY not configured, falling back to static matching')
-            return { simulationId: 'projectile-motion', reason: 'Configuration missing' }
+            return {
+                simulationId: getBestStaticMatchId(query, availableSimulations),
+                reason: 'Matched with local keyword fallback because Gemini is not configured.'
+            }
         }
 
         const simList = availableSimulations.map(s => ({
@@ -204,9 +248,20 @@ Return ONLY valid JSON:
         }
 
         const result = JSON.parse(jsonText)
+        const isValidId = availableSimulations.some(s => s.id === result.simulationId)
+        if (!isValidId) {
+            return {
+                simulationId: getBestStaticMatchId(query, availableSimulations),
+                reason: 'AI returned an unknown simulation id, so local keyword matching was used.'
+            }
+        }
+
         return result
     } catch (error) {
         console.error('Gemini Match Error:', error)
-        return { simulationId: 'projectile-motion', reason: 'AI matching failed, defaulting to projectile motion.' }
+        return {
+            simulationId: getBestStaticMatchId(query, availableSimulations),
+            reason: 'AI matching failed, so local keyword matching was used.'
+        }
     }
 }

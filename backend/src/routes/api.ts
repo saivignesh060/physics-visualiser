@@ -20,7 +20,7 @@ router.post('/match-simulation', async (req, res) => {
         const { findBestSimulationMatch } = await import('../services/geminiService.js')
         const matchResult = await findBestSimulationMatch(query, simulations)
 
-        const simulation = simulations.find(s => s.id === matchResult.simulationId) || simulations[0]
+        const simulation = simulations.find(s => s.id === matchResult.simulationId) || matchSimulation(query)
 
         // Attach AI reason
         const responseSimulation = {

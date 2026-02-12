@@ -19,6 +19,7 @@ export default function ProblemInput({ onSimulationSelected, onBrowseClick }: Pr
         "A ball is thrown at 20 m/s at 45° angle",
         "A ball is thrown straight up with a speed of 10 m/s",
         "A block slides down a 30° incline with friction",
+        "A 2 kg block is on top of a 4 kg block and the lower block is pulled with 20 N force",
         "A box is pulled across a horizontal surface",
         "A pendulum swings from 30° angle",
     ]
@@ -173,7 +174,7 @@ export default function ProblemInput({ onSimulationSelected, onBrowseClick }: Pr
                 <h3 className="text-sm font-semibold text-blue-900 mb-2">📊 Available Simulations</h3>
                 <ul className="text-sm text-blue-800 space-y-1">
                     <li>• <strong>Kinematics</strong>: Projectile motion, vertical throw, free fall, uniform acceleration</li>
-                    <li>• <strong>Dynamics</strong>: Inclined planes, friction, pulleys, pendulums</li>
+                    <li>• <strong>Dynamics</strong>: Inclined planes, friction, pulleys, block-on-block, pendulums</li>
                     <li>• <strong>Interactive</strong>: Adjust parameters in real-time and see instant changes</li>
                     <li>• <strong>Visual</strong>: Graphs for position, velocity, acceleration, and energy</li>
                 </ul>

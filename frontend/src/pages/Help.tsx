@@ -6,7 +6,7 @@ export default function Help() {
         },
         {
             question: 'What physics domains are supported?',
-            answer: 'Currently supports: Kinematics (projectile motion, free fall), Dynamics (forces, friction, inclines), Energy (springs, collisions), Waves (pendulum, SHM), and Electromagnetism (fields, charged particles).'
+            answer: 'Currently supports: Kinematics (projectile motion, free fall, uniform acceleration), Dynamics (forces, friction, inclines, block-on-block, pulleys, pendulums), Energy (springs, collisions), Waves (pendulum, SHM), and Electromagnetism (fields, charged particles).'
         },
         {
             question: 'How do I adjust parameters?',

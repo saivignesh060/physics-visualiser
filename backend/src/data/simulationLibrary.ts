@@ -111,9 +111,9 @@ export const SIMULATION_LIBRARY: SimulationTemplate[] = [
     {
         id: 'block-on-block',
         name: 'Block on Block Friction',
-        description: 'A block resting on top of another block which is pulled by a force',
+        description: 'A top block rests on a lower block while an external force pulls the system',
         domain: 'dynamics',
-        keywords: ['block on block', 'stacked blocks', 'friction', 'two blocks', 'relative motion'],
+        keywords: ['block on block', 'stacked blocks', 'friction', 'two blocks', 'relative motion', 'top block', 'bottom block', 'blocks slipping', 'block pulled by force', 'stacked block friction'],
         defaultParameters: {
             mass: 2, // Top block
             mass2: 4, // Bottom block
