@@ -1,225 +1,200 @@
-# Physics Visualizer 🚀
+# Physics Visualizer
 
-An AI-powered educational platform for visualizing physics concepts through interactive simulations. Built for STEM learning with a focus on motion physics (kinematics and dynamics).
+Physics Visualizer is an AI-assisted educational web app for exploring motion physics through interactive simulations.  
+It focuses on kinematics and dynamics with a static simulation library, real-time animation, and live graphs.
 
-![Physics Visualizer](https://img.shields.io/badge/Physics-Visualizer-blue)
-![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)
-![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js)
+## Current Status
 
-## ✨ Features
+- Monorepo with `frontend` (React + TypeScript + Vite) and `backend` (Express + TypeScript)
+- Static simulation library served from backend API
+- Simulation matching via Gemini (when configured) with robust local keyword fallback
+- Real-time canvas animation and graph dashboard in the frontend
 
-### 🎯 Static Simulation Library
-- **13 Pre-defined Simulations** covering kinematics and dynamics
-- **Keyword Matching** - Natural language query to simulation matching
-- **Simulation Browser** - Visual catalog with domain filtering
-- **oPhysics-Style Layout** - Simulation on left, controls on right, graphs below
+## Features
 
-### 🔐 Authentication System
-- **User Login/Registration** with demo mode
-- **Protected Routes** - My Simulations page requires authentication
-- **Personalized Experience** - User greeting and saved simulations
-- **Persistent Sessions** - LocalStorage-based authentication
+### Simulation Workflow
 
-### 📊 Interactive Visualizations
-- **Real-time Animation** - Smooth 60fps canvas-based physics animations
-- **Dynamic Graphs** - Position, velocity, acceleration, and energy graphs
-- **Parameter Controls** - Adjust parameters with sliders for instant feedback
-- **Simple Representations** - Objects shown as dots/circles with labels
+- Natural-language query input
+- Query-to-simulation matching
+- One-click simulation load
+- Parameter sliders with instant regeneration of simulation data
+- Play/pause animation and reset controls
 
-### 🎛️ Available Simulations
+### Visualization
 
-**Kinematics (4 simulations):**
-- Projectile Motion
-- Vertical Projectile Motion
-- Free Fall
-- Uniform Acceleration in 1D
+- Canvas-based animation
+- Position, velocity, acceleration, and energy graphs
+- Domain-specific scene renderers (projectile, incline, pulley, pendulum, block systems)
 
-**Dynamics (5 simulations):**
-- Inclined Plane with Friction
-- Friction on Horizontal Surface
-- Inclined Plane with Pulley (Two Masses)
-- Simple Pendulum
-- Conical Pendulum
+### Auth and App Structure
 
-## 🚀 Getting Started
+- Login and registration pages
+- Protected "My Simulations" route
+- Workspace for simulation interaction
+- Help page and chatbot UI
 
-### Prerequisites
-- Node.js 18+ and npm
-- Git
+## Simulation Library
 
-### Installation
+The project currently includes 10 simulations.
 
-1. **Clone the repository**
-```bash
-git clone https://github.com/YOUR_USERNAME/physics-visualizer.git
-cd physics-visualizer
+### Kinematics (4)
+
+1. Projectile Motion
+2. Vertical Projectile Motion
+3. Free Fall
+4. Uniform Acceleration in 1D
+
+### Dynamics (6)
+
+1. Block on Block Friction
+2. Inclined Plane with Friction
+3. Friction on Horizontal Surface
+4. Inclined Plane with Pulley (Two Masses)
+5. Simple Pendulum
+6. Conical Pendulum
+
+## Recent Updates
+
+- Fixed Free Fall animation/data progression
+- Added and exposed `initialHeight` and `initialVelocity` for Free Fall
+- Fixed Uniform Acceleration in 1D motion progression
+- Added explicit `acceleration` parameter handling for Uniform 1D
+- Improved block-on-block discoverability in simulation matching
+- Improved backend match fallback behavior when Gemini is unavailable or fails
+
+## Tech Stack
+
+### Frontend
+
+- React 18
+- TypeScript
+- Vite
+- React Router
+- Recharts
+- Tailwind CSS
+
+### Backend
+
+- Node.js
+- Express
+- TypeScript
+- tsx (dev runner)
+
+## Project Structure
+
+```text
+physics-visualizer/
+|-- backend/
+|   |-- src/
+|   |   |-- data/
+|   |   |   `-- simulationLibrary.ts
+|   |   |-- routes/
+|   |   |   `-- api.ts
+|   |   |-- services/
+|   |   |   `-- geminiService.ts
+|   |   |-- utils/
+|   |   |   `-- matcher.ts
+|   |   `-- server.ts
+|   `-- package.json
+|-- frontend/
+|   |-- src/
+|   |   |-- components/
+|   |   |-- pages/
+|   |   |-- types/
+|   |   `-- utils/
+|   `-- package.json
+|-- package.json
+`-- README.md
 ```
 
-2. **Install backend dependencies**
+## Prerequisites
+
+- Node.js 18+
+- npm 9+
+
+## Installation
+
+From repository root:
+
 ```bash
-cd backend
 npm install
 ```
 
-3. **Install frontend dependencies**
-```bash
-cd ../frontend
-npm install
-```
+## Environment Variables
 
-4. **Set up environment variables**
+Create `backend/.env`:
 
-Create `.env` file in the `backend` directory:
 ```env
 PORT=3000
 FRONTEND_URL=http://localhost:5173
-GEMINI_API_KEY=your_api_key_here  # Optional, not used in static mode
+GEMINI_API_KEY=your_key_here
+GEMINI_MODEL=gemini-2.5-flash
 ```
 
-### Running the Application
+Notes:
 
-**Terminal 1 - Backend:**
+- `GEMINI_API_KEY` is optional.  
+  If missing, the app still works using local keyword-based matching.
+- `FRONTEND_URL` must match your frontend origin for CORS.
+
+## Running Locally
+
+From repository root:
+
 ```bash
-cd backend
 npm run dev
 ```
-Backend runs on `http://localhost:3000`
 
-**Terminal 2 - Frontend:**
+This runs:
+
+- Backend at `http://localhost:3000`
+- Frontend at `http://localhost:5173`
+
+## Build
+
+From repository root:
+
 ```bash
-cd frontend
-npm run dev
-```
-Frontend runs on `http://localhost:5173`
-
-Open your browser and navigate to `http://localhost:5173`
-
-## 📖 Usage
-
-### Quick Start
-1. **Sign Up** - Create an account (demo mode accepts any credentials)
-2. **Enter a Query** - Type a physics problem like "A ball is thrown straight up with a speed of 10 m/s"
-3. **Find Simulation** - Click to match your query to a simulation
-4. **Load & Explore** - Adjust parameters and watch the simulation update in real-time
-5. **Browse Library** - Click "Browse All Simulations" to see all available simulations
-
-### Example Queries
-- "A ball is thrown straight up with a speed of 10 m/s" → Vertical Projectile Motion
-- "A block slides down a 30° incline with friction" → Inclined Plane with Friction
-- "A pendulum swings from 30° angle" → Simple Pendulum
-- "A box is pulled across a horizontal surface" → Friction on Horizontal Surface
-
-## 🏗️ Project Structure
-
-```
-physics-visualizer/
-├── backend/
-│   ├── src/
-│   │   ├── data/
-│   │   │   └── simulationLibrary.ts    # 13 pre-defined simulations
-│   │   ├── routes/
-│   │   │   └── api.ts                  # API endpoints
-│   │   ├── utils/
-│   │   │   └── matcher.ts              # Keyword matching algorithm
-│   │   └── server.ts                   # Express server
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── AnimationCanvas.tsx     # Physics animation
-│   │   │   ├── ControlPanel.tsx        # Dynamic parameter controls
-│   │   │   ├── GraphDashboard.tsx      # Real-time graphs
-│   │   │   ├── ProblemInput.tsx        # Query input & matching
-│   │   │   └── SimulationBrowser.tsx   # Simulation catalog
-│   │   ├── contexts/
-│   │   │   └── AuthContext.tsx         # Authentication state
-│   │   ├── pages/
-│   │   │   ├── Home.tsx                # Landing page
-│   │   │   ├── Login.tsx               # Login page
-│   │   │   ├── Register.tsx            # Registration page
-│   │   │   ├── SimulationWorkspace.tsx # Main workspace
-│   │   │   ├── MySimulations.tsx       # User's saved simulations
-│   │   │   └── Help.tsx                # Help & documentation
-│   │   ├── utils/
-│   │   │   └── physicsEngine.ts        # Physics calculations
-│   │   └── App.tsx                     # Main app with routing
-│   └── package.json
-└── README.md
+npm run build
 ```
 
-## 🛠️ Technology Stack
-
-### Frontend
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool
-- **React Router** - Navigation
-- **Recharts** - Graph visualization
-- **Canvas API** - Animation rendering
-- **Tailwind CSS** - Styling
-
-### Backend
-- **Node.js** - Runtime
-- **Express.js** - Web framework
-- **TypeScript** - Type safety
-- **tsx** - TypeScript execution
-
-## 🎨 Design Philosophy
-
-- **Simplicity** - Static library over dynamic AI generation for reliability
-- **Education-First** - Clear explanations and real-time parameter manipulation
-- **Visual Excellence** - Smooth animations and intuitive UI
-- **Accessibility** - Voice input support and keyboard navigation
-
-## 📝 API Endpoints
+## API Endpoints
 
 ### Simulations
-- `GET /api/simulations` - Get all simulations
-- `GET /api/simulations/:id` - Get simulation by ID
-- `GET /api/simulations/domain/:domain` - Get simulations by domain (kinematics/dynamics)
-- `POST /api/match-simulation` - Match query to simulation
+
+- `GET /api/simulations`
+- `GET /api/simulations/:id`
+- `GET /api/simulations/domain/:domain` where domain is `kinematics` or `dynamics`
+- `POST /api/match-simulation`
 
 ### Health
-- `GET /health` - Server health check
 
-## 🧪 Testing
+- `GET /health`
 
-The application includes:
-- **13 Working Simulations** - All tested and verified
-- **Keyword Matching** - Tested with various queries
-- **Authentication Flow** - Login/logout/registration tested
-- **Parameter Manipulation** - Real-time updates verified
-- **Protected Routes** - Access control tested
+## Example Queries
 
-## 🚧 Future Enhancements
+- `A ball is thrown straight up with a speed of 10 m/s`
+- `An object falls from 100 m under gravity`
+- `Object moving with constant acceleration in one dimension`
+- `A block slides down a 30 deg incline with friction`
+- `A 2 kg block is on top of a 4 kg block and the lower block is pulled with 20 N force`
 
-- [ ] Database integration for persistent user simulations
-- [ ] More simulation types (energy, waves, electromagnetism)
-- [ ] Collaborative features (share simulations)
-- [ ] Mobile app version
-- [ ] Advanced physics (numerical integration for large angles)
-- [ ] Export simulation data as CSV/JSON
+## Deployment
 
-## 🤝 Contributing
+- Frontend deployment guide: `VERCEL_DEPLOYMENT.md`
+- Render configuration is included in `render.yaml`
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## Contributing
 
-## 📄 License
+1. Create a feature branch
+2. Make changes with tests/build passing
+3. Open a pull request
 
-This project is licensed under the MIT License.
+## License
 
-## 👨‍💻 Author
+MIT
 
-**Vignesh**
-- GitHub: [@saivignesh060](https://github.com/saivignesh060)
+## Author
 
-## 🙏 Acknowledgments
-
-- Inspired by [oPhysics.com](https://ophysics.com) for the layout and simulation approach
-- Built for STEM education and hackathon demonstration
-- Physics calculations based on classical mechanics principles
-
----
-
-**Made with ❤️ for physics education**
+- Vignesh
+- GitHub: `@saivignesh060`
