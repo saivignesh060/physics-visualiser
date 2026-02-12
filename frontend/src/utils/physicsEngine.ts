@@ -16,6 +16,7 @@ export type SimulationType =
     | 'vertical-projectile'
     | 'free-fall'
     | 'uniform-acceleration'
+    | 'block-on-block'
 
 export function getSimulationType(problem: PhysicsProblem, params: SimulationParameters): SimulationType {
     const objectType = problem.objects[0]?.type
@@ -34,6 +35,10 @@ export function getSimulationType(problem: PhysicsProblem, params: SimulationPar
             return 'incline-pulley'
         }
         return 'incline-friction'
+    }
+
+    if (params.mass2 !== undefined && params.appliedForce !== undefined) {
+        return 'block-on-block'
     }
 
     if (params.appliedForce !== undefined) {
@@ -78,6 +83,8 @@ export function generateSimulationData(
         case 'free-fall':
         case 'uniform-acceleration':
             return generateKinematicsData(params)
+        case 'block-on-block':
+            return generateBlockOnBlockData(params)
         default:
             return generateKinematicsData(params)
     }
@@ -93,17 +100,25 @@ function generateKinematicsData(params: SimulationParameters): GraphDataPoint[] 
     let vx = params.initialVelocity * Math.cos(angleRad)
     let vy = params.initialVelocity * Math.sin(angleRad)
     let x = 0
-    let y = 0
+    let y = params.initialHeight || 0
     let t = 0
 
     const mass = params.mass || 1
     const maxTime = 10
 
+    const isUniformAccel = params.angle === 0 || params.angle === 180
+
     // Semi-Implicit Euler Integration
-    while (t < maxTime && y >= 0) {
+    while (t < maxTime && y >= -100) { // Allow dropping below 0 for free fall visual
         // Calculate forces and acceleration
-        const ax = 0 // No horizontal acceleration
-        const ay = -g // Gravity
+        let ax = 0
+        let ay = -g
+
+        if (isUniformAccel) {
+            // Gravity slider acts as acceleration magnitude
+            ax = g * Math.cos(angleRad)
+            ay = g * Math.sin(angleRad)
+        }
 
         // Update velocity (using acceleration)
         vx += ax * dt
@@ -486,6 +501,107 @@ function generateInclinePulleyData(params: SimulationParameters): GraphDataPoint
             kineticEnergy: ke,
             potentialEnergy: pe1 + pe2,
             totalEnergy: ke + pe1 + pe2,
+        })
+
+        t += dt
+    }
+
+    return data
+}
+
+// ==================== BLOCK ON BLOCK FRICTION ====================
+function generateBlockOnBlockData(params: SimulationParameters): GraphDataPoint[] {
+    const data: GraphDataPoint[] = []
+    const g = params.gravity || 9.8
+    const m1 = params.mass || 2 // Top block
+    const m2 = params.mass2 || 4 // Bottom block
+    const F = params.appliedForce || 20
+    const mu1 = params.frictionCoefficient || 0.3 // Between blocks
+    const mu2 = params.frictionCoefficient2 || 0.1 // Ground
+    const dt = 0.02
+
+    let x2 = 0 // Bottom block
+    let v2 = 0
+    let x1 = 0 // Top block (relative to m2? No, use absolute for simplicity, or relative for rendering)
+    // Using absolute positions for calculation, but renderer might expect relative
+    let v1 = 0
+
+    // We will track absolute positions
+    let t = 0
+    const maxTime = 10
+
+    // Max static friction between blocks
+    const f1_max = mu1 * m1 * g
+    // Kinetic friction between blocks
+    const f1_k = mu1 * m1 * g // Simplified model often uses same coef or slight diff
+
+    // Friction with ground (on m2)
+    // Normal force on ground = (m1 + m2)g
+    const f2_k = mu2 * (m1 + m2) * g
+
+    while (t < maxTime) {
+        // 1. Analyze motion of Bottom Block (m2) assuming they move together first
+        // F is applied to m2? Description says "pulled by a force". Assuming on m2.
+
+        // Ground friction opposes motion of m2
+        // Ground friction opposes motion of m2
+        // const groundFriction = v2 > 0 ? -f2_k : (v2 < 0 ? f2_k : 0) 
+
+        // Static check implicit in netForce calculation below for now
+
+        // Assume slipping for general dynamics simulation
+        // Equation of motion for m2: F - f_ground - f_top_on_bottom = m2 * a2
+        // Equation of motion for m1: f_bottom_on_top = m1 * a1
+
+        // Check if blocks move together:
+        // Common acceleration a_common
+        // Net force on system = F - f_ground
+        const netForceSystem = F - f2_k // Assuming velocity > 0 or F > friction
+        let a2 = 0
+        let a1 = 0
+
+        if (netForceSystem > 0) {
+            const a_common = netForceSystem / (m1 + m2)
+
+            // Force required to accelerate m1 at a_common is m1 * a_common
+            const f_needed = m1 * a_common
+
+            if (f_needed <= f1_max) {
+                // They move together
+                a1 = a_common
+                a2 = a_common
+            } else {
+                // They slip. 
+                // Friction on m1 is f1_k (forward)
+                a1 = f1_k / m1
+                // Friction on m2 is F - f2_k - f1_k (backwards from top block)
+                a2 = (F - f2_k - f1_k) / m2
+            }
+        } else {
+            // Not enough force to move system or slowing down
+            a1 = 0
+            a2 = 0
+        }
+
+        v1 += a1 * dt
+        v2 += a2 * dt
+
+        x1 += v1 * dt
+        x2 += v2 * dt
+
+        const ke = 0.5 * m1 * v1 * v1 + 0.5 * m2 * v2 * v2
+
+        data.push({
+            time: t,
+            positionX: x2, // Bottom block absolute
+            positionY: x1 - x2, // Top block RELATIVE to bottom block (for visualization convenience)
+            velocityX: v1,
+            velocityY: v2,
+            accelerationX: a1,
+            accelerationY: a2,
+            kineticEnergy: ke,
+            potentialEnergy: 0,
+            totalEnergy: ke,
         })
 
         t += dt

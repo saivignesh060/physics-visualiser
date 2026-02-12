@@ -76,10 +76,12 @@ export const SIMULATION_LIBRARY: SimulationTemplate[] = [
             angle: 270,
             gravity: 9.8,
             mass: 1,
+            initialHeight: 100,
         },
         parameterDefinitions: [
             { key: 'gravity', label: 'Gravity', min: 1, max: 20, step: 0.1, unit: 'm/s²' },
             { key: 'mass', label: 'Mass', min: 0.1, max: 10, step: 0.1, unit: 'kg' },
+            { key: 'initialHeight', label: 'Initial Height', min: 10, max: 500, step: 10, unit: 'm' },
         ],
         explanation: 'In free fall, objects accelerate downward at g regardless of mass (neglecting air resistance).',
         objectType: 'point_mass',
@@ -103,6 +105,30 @@ export const SIMULATION_LIBRARY: SimulationTemplate[] = [
         ],
         explanation: 'Uniform acceleration means velocity changes at a constant rate over time.',
         objectType: 'point_mass',
+    },
+    {
+        id: 'block-on-block',
+        name: 'Block on Block Friction',
+        description: 'A block resting on top of another block which is pulled by a force',
+        domain: 'dynamics',
+        keywords: ['block on block', 'stacked blocks', 'friction', 'two blocks', 'relative motion'],
+        defaultParameters: {
+            mass: 2, // Top block
+            mass2: 4, // Bottom block
+            appliedForce: 20,
+            frictionCoefficient: 0.3, // Between blocks
+            frictionCoefficient2: 0.1, // Ground friction
+            gravity: 9.8,
+        },
+        parameterDefinitions: [
+            { key: 'mass', label: 'Top Mass (m1)', min: 0.5, max: 10, step: 0.1, unit: 'kg' },
+            { key: 'mass2', label: 'Bottom Mass (m2)', min: 0.5, max: 10, step: 0.1, unit: 'kg' },
+            { key: 'appliedForce', label: 'Applied Force (on m2)', min: 0, max: 100, step: 1, unit: 'N' },
+            { key: 'frictionCoefficient', label: 'Friction between blocks (μ1)', min: 0, max: 1, step: 0.05, unit: '' },
+            { key: 'frictionCoefficient2', label: 'Friction with ground (μ2)', min: 0, max: 1, step: 0.05, unit: '' },
+        ],
+        explanation: 'The top block moves with the bottom block due to static friction up to a limit, after which it slips.',
+        objectType: 'block',
     },
 
     {

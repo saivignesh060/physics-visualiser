@@ -84,6 +84,9 @@ export default function AnimationCanvas({
             case 'incline-pulley':
                 drawPulleyScene(ctx, width, height, graphData, currentData, parameters)
                 break
+            case 'block-on-block':
+                drawBlockOnBlockScene(ctx, width, height, graphData, currentData, parameters)
+                break
             case 'conical-pendulum':
                 drawConicalPendulumScene(ctx, width, height, graphData, currentData, parameters)
                 break
@@ -133,7 +136,11 @@ function drawProjectileScene(
 ) {
     const originX = 100
     const originY = height - 50
-    const scale = 20
+
+    // Dynamic scaling for Free Fall / High Projectiles
+    const maxY = Math.max(...graphData.map(d => d.positionY), 10)
+    const availableHeight = height - 100
+    const scale = Math.min(20, availableHeight / (maxY * 1.1))
 
     // Draw ground
     ctx.strokeStyle = '#64748b'
@@ -574,4 +581,90 @@ function drawConicalPendulumScene(
     ctx.strokeStyle = '#6d28d9'
     ctx.lineWidth = 3
     ctx.stroke()
+    ctx.stroke()
+}
+
+function drawBlockOnBlockScene(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+    _graphData: GraphDataPoint[],
+    currentData: GraphDataPoint,
+    parameters: SimulationParameters
+) {
+    const originX = width / 2 - 200
+    const originY = height - 100
+    const scale = 50
+
+    // Ground
+    ctx.fillStyle = '#cbd5e1'
+    ctx.fillRect(0, originY, width, height - originY)
+
+    ctx.strokeStyle = '#64748b'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(0, originY)
+    ctx.lineTo(width, originY)
+    ctx.stroke()
+
+    // Bottom Block (m2)
+    const x2 = originX + currentData.positionX * scale
+    const m2Width = 120
+    const m2Height = 60
+
+    ctx.fillStyle = '#10b981'
+    ctx.fillRect(x2 - m2Width / 2, originY - m2Height, m2Width, m2Height)
+    ctx.strokeStyle = '#059669'
+    ctx.lineWidth = 3
+    ctx.strokeRect(x2 - m2Width / 2, originY - m2Height, m2Width, m2Height)
+
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 16px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('m₂', x2, originY - m2Height / 2 + 5)
+
+    // Top Block (m1)
+    // In physics engine, positionY stores (x1 - x2) = relative position
+    const relX = currentData.positionY
+    const x1 = x2 + relX * scale
+    const m1Width = 70
+    const m1Height = 40
+    const y1 = originY - m2Height // Sitting on m2
+
+    ctx.fillStyle = '#3b82f6'
+    ctx.fillRect(x1 - m1Width / 2, y1 - m1Height, m1Width, m1Height)
+    ctx.strokeStyle = '#1d4ed8'
+    ctx.lineWidth = 3
+    ctx.strokeRect(x1 - m1Width / 2, y1 - m1Height, m1Width, m1Height)
+
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 14px sans-serif'
+    ctx.fillText('m₁', x1, y1 - m1Height / 2 + 5)
+
+    // Applied Force Arrow (on m2)
+    const force = parameters.appliedForce || 0
+    if (Math.abs(force) > 0) {
+        const arrowY = originY - m2Height / 2
+        const direction = Math.sign(force)
+        const startX = x2 + (direction * (m2Width / 2))
+        const endX = startX + (direction * 50)
+
+        ctx.strokeStyle = '#ef4444'
+        ctx.lineWidth = 4
+        ctx.beginPath()
+        ctx.moveTo(startX, arrowY)
+        ctx.lineTo(endX, arrowY)
+        ctx.stroke()
+
+        // Arrowhead
+        ctx.fillStyle = '#ef4444'
+        ctx.beginPath()
+        ctx.moveTo(endX, arrowY)
+        ctx.lineTo(endX - direction * 10, arrowY - 6)
+        ctx.lineTo(endX - direction * 10, arrowY + 6)
+        ctx.fill()
+
+        ctx.fillStyle = '#be123c'
+        ctx.fillText('F', endX + direction * 15, arrowY + 5)
+    }
 }
