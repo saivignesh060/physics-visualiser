@@ -179,7 +179,7 @@ npm run start
 - Run commands from the repository root so workspace scripts resolve correctly.
 
 ## 8. Demo Videos of MVP
-- Demo video link: `PASTE_GOOGLE_DRIVE_LINK_HERE`
+- Demo video link: `https://drive.google.com/file/d/1S6VeuJUHf7723cOwmLyM-0uY27LAABNQ/view?usp=drive_link`
 
 ## 9. Demo Images of MVP
 ### 1. AI Problem Input and Simulation Matching
