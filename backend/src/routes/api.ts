@@ -1,6 +1,8 @@
 import { Router } from 'express'
 import { getAllSimulations, getSimulationById, getSimulationsByDomain } from '../data/simulationLibrary.js'
 import { matchSimulation, getTopMatches } from '../utils/matcher.js'
+import { chatWithAI } from '../services/claudeService.js'
+import { chatWithGemini } from '../services/geminiService.js'
 
 const router = Router()
 
@@ -42,6 +44,29 @@ router.post('/match-simulation', async (req, res) => {
         } else {
             res.status(500).json({ error: 'Failed to match simulation', message: error.message })
         }
+    }
+})
+
+// Chat with AI assistant using current simulation context
+router.post('/chat', async (req, res) => {
+    try {
+        const { message, context } = req.body
+
+        if (!message || typeof message !== 'string') {
+            return res.status(400).json({ error: 'Message is required' })
+        }
+
+        let response = await chatWithGemini(message, context)
+
+        // Optional secondary fallback path (if Gemini returns no text for any reason)
+        if (!response || typeof response !== 'string') {
+            response = await chatWithAI(message, context)
+        }
+
+        res.json({ response })
+    } catch (error: any) {
+        console.error('Chat error:', error)
+        res.status(500).json({ error: 'Failed to chat with assistant', message: error.message })
     }
 })
 

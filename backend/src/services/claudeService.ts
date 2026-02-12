@@ -1,8 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk'
 
-const client = new Anthropic({
-    apiKey: process.env.CLAUDE_API_KEY || '',
-})
+function getClaudeClient(): Anthropic | null {
+    const apiKey = process.env.CLAUDE_API_KEY
+    if (!apiKey) return null
+    return new Anthropic({ apiKey })
+}
 
 const MODEL = 'claude-sonnet-4-20250514'
 
@@ -11,6 +13,11 @@ const MODEL = 'claude-sonnet-4-20250514'
  */
 export async function parseProblem(problemText: string) {
     try {
+        const client = getClaudeClient()
+        if (!client) {
+            return fallbackParser(problemText)
+        }
+
         const prompt = `You are a physics problem parser. Extract the following information from the physics problem and return it as JSON:
 
 Problem: "${problemText}"
@@ -115,6 +122,11 @@ function fallbackParser(text: string) {
  */
 export async function chatWithAI(userMessage: string, context?: any) {
     try {
+        const client = getClaudeClient()
+        if (!client) {
+            return "I'm here to help you understand physics. Ask about gravity, acceleration, forces, or how changing parameters affects the simulation."
+        }
+
         const systemPrompt = `You are a helpful physics tutor assistant for a physics visualization platform. 
 
 Current simulation context:

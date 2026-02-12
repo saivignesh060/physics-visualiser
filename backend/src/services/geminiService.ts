@@ -265,3 +265,55 @@ Return ONLY valid JSON:
         }
     }
 }
+
+/**
+ * Chat with AI assistant using Gemini
+ */
+export async function chatWithGemini(userMessage: string, context?: any): Promise<string> {
+    try {
+        const apiKey = process.env.GEMINI_API_KEY
+        const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+
+        if (!apiKey) {
+            return "I'm here to help you understand physics. Ask about motion, forces, acceleration, or energy trends in the simulation."
+        }
+
+        const systemPrompt = `You are a helpful physics tutor assistant for a physics visualization platform.
+
+Current simulation context:
+${context ? JSON.stringify(context, null, 2) : 'No simulation loaded'}
+
+Guidelines:
+- Explain concepts clearly and concisely.
+- Reference the current simulation context when relevant.
+- Keep responses practical and focused for students.
+- Limit response length to 2-3 short paragraphs.
+`
+
+        const prompt = `${systemPrompt}\nUser question: "${userMessage}"`
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
+        })
+
+        if (!response.ok) {
+            throw new Error(`Gemini API error: ${response.status}`)
+        }
+
+        const data: any = await response.json()
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
+
+        if (!text || typeof text !== 'string') {
+            throw new Error('Invalid Gemini chat response')
+        }
+
+        return text.trim()
+    } catch (error) {
+        console.error('Gemini Chat Error:', error)
+        return "I can still help with this simulation. Try asking about acceleration, force balance, energy, or what changes when you adjust one slider at a time."
+    }
+}
