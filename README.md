@@ -1,200 +1,166 @@
 # Physics Visualizer
 
-Physics Visualizer is an AI-assisted educational web app for exploring motion physics through interactive simulations.  
-It focuses on kinematics and dynamics with a static simulation library, real-time animation, and live graphs.
+## 1. Project Title
+Physics Visualizer
 
-## Current Status
+## 2. Description
+Physics Visualizer is an AI-assisted educational web application that converts physics problem statements into interactive simulations.
 
-- Monorepo with `frontend` (React + TypeScript + Vite) and `backend` (Express + TypeScript)
-- Static simulation library served from backend API
-- Simulation matching via Gemini (when configured) with robust local keyword fallback
-- Real-time canvas animation and graph dashboard in the frontend
+The MVP focuses on motion-based topics (kinematics and dynamics) and provides:
+- Natural-language problem input
+- Simulation matching and loading
+- Real-time animation
+- Live graphs for position, velocity, acceleration, and energy
+- AI assistant support for concept explanations
 
-## Features
-
-### Simulation Workflow
-
-- Natural-language query input
-- Query-to-simulation matching
-- One-click simulation load
-- Parameter sliders with instant regeneration of simulation data
-- Play/pause animation and reset controls
-
-### Visualization
-
-- Canvas-based animation
-- Position, velocity, acceleration, and energy graphs
-- Domain-specific scene renderers (projectile, incline, pulley, pendulum, block systems)
-
-### Auth and App Structure
-
-- Login and registration pages
-- Protected "My Simulations" route
-- Workspace for simulation interaction
-- Help page and chatbot UI
-
-## Simulation Library
-
-The project currently includes 10 simulations.
-
-### Kinematics (4)
-
-1. Projectile Motion
-2. Vertical Projectile Motion
-3. Free Fall
-4. Uniform Acceleration in 1D
-
-### Dynamics (6)
-
-1. Block on Block Friction
-2. Inclined Plane with Friction
-3. Friction on Horizontal Surface
-4. Inclined Plane with Pulley (Two Masses)
-5. Simple Pendulum
-6. Conical Pendulum
-
-## Recent Updates
-
-- Fixed Free Fall animation/data progression
-- Added and exposed `initialHeight` and `initialVelocity` for Free Fall
-- Fixed Uniform Acceleration in 1D motion progression
-- Added explicit `acceleration` parameter handling for Uniform 1D
-- Improved block-on-block discoverability in simulation matching
-- Improved backend match fallback behavior when Gemini is unavailable or fails
-
-## Tech Stack
-
+## 3. Tech Stack Used
 ### Frontend
-
 - React 18
 - TypeScript
 - Vite
-- React Router
+- React Router DOM
 - Recharts
 - Tailwind CSS
 
 ### Backend
-
 - Node.js
 - Express
 - TypeScript
-- tsx (dev runner)
+- tsx
 
-## Project Structure
+### AI Integrations
+- Google Gemini API (`@google/generative-ai`)
+- Anthropic SDK (`@anthropic-ai/sdk`)
 
+### Tooling
+- npm workspaces
+- concurrently
+
+## 4. Project Structure
 ```text
 physics-visualizer/
-|-- backend/
-|   |-- src/
-|   |   |-- data/
-|   |   |   `-- simulationLibrary.ts
-|   |   |-- routes/
-|   |   |   `-- api.ts
-|   |   |-- services/
-|   |   |   `-- geminiService.ts
-|   |   |-- utils/
-|   |   |   `-- matcher.ts
-|   |   `-- server.ts
-|   `-- package.json
 |-- frontend/
 |   |-- src/
+|   |   |-- api/
 |   |   |-- components/
+|   |   |-- contexts/
 |   |   |-- pages/
 |   |   |-- types/
 |   |   `-- utils/
 |   `-- package.json
+|-- backend/
+|   |-- src/
+|   |   |-- data/
+|   |   |-- routes/
+|   |   |-- services/
+|   |   `-- utils/
+|   `-- package.json
+|-- images/
 |-- package.json
 `-- README.md
 ```
 
-## Prerequisites
+## 5. How to Run the Project
+### Prerequisites
+- Node.js 18 or later
+- npm 9 or later
 
-- Node.js 18+
-- npm 9+
-
-## Installation
-
-From repository root:
+### Installation
+From the project root:
 
 ```bash
 npm install
 ```
 
-## Environment Variables
-
-Create `backend/.env`:
+### Environment Variables
+Create a file at `backend/.env`:
 
 ```env
 PORT=3000
 FRONTEND_URL=http://localhost:5173
 GEMINI_API_KEY=your_key_here
 GEMINI_MODEL=gemini-2.5-flash
+CLAUDE_API_KEY=your_key_here
 ```
 
-Notes:
-
-- `GEMINI_API_KEY` is optional.  
-  If missing, the app still works using local keyword-based matching.
-- `FRONTEND_URL` must match your frontend origin for CORS.
-
-## Running Locally
-
-From repository root:
+### Run in Development
+From the project root:
 
 ```bash
 npm run dev
 ```
 
-This runs:
+This starts:
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:3000`
 
-- Backend at `http://localhost:3000`
-- Frontend at `http://localhost:5173`
-
-## Build
-
-From repository root:
+### Build
+From the project root:
 
 ```bash
 npm run build
 ```
 
-## API Endpoints
+## 6. Dependencies
+### Root
+- `concurrently`
 
-### Simulations
+### Frontend
+- `react`, `react-dom`
+- `react-router-dom`
+- `recharts`
+- `katex`
+- `jspdf`
+- `tesseract.js`
+- `@anthropic-ai/sdk`
 
-- `GET /api/simulations`
-- `GET /api/simulations/:id`
-- `GET /api/simulations/domain/:domain` where domain is `kinematics` or `dynamics`
-- `POST /api/match-simulation`
+### Backend
+- `express`
+- `cors`
+- `dotenv`
+- `bcrypt`
+- `jsonwebtoken`
+- `pg`
+- `@google/generative-ai`
+- `@anthropic-ai/sdk`
 
-### Health
+## 7. Important Instructions
+- `GEMINI_API_KEY` is optional for simulation matching and chatbot fallback flows, but required for `POST /api/simulation/generate`.
+- Keep `FRONTEND_URL` aligned with the actual frontend origin to avoid CORS errors.
+- Authentication in the current MVP is demo-mode (client-side localStorage based).
+- The `My Simulations` page in MVP uses mock data and is intended as a protected logged-in experience.
+- Run commands from the repository root so workspace scripts resolve correctly.
 
-- `GET /health`
+## 8. Demo Videos of MVP
+- Demo video link: `PASTE_GOOGLE_DRIVE_LINK_HERE`
 
-## Example Queries
+## 9. Demo Images of MVP
+### 1. AI Problem Input and Simulation Matching
+Shows how users enter a natural-language physics problem and quickly find the best simulation.
 
-- `A ball is thrown straight up with a speed of 10 m/s`
-- `An object falls from 100 m under gravity`
-- `Object moving with constant acceleration in one dimension`
-- `A block slides down a 30 deg incline with friction`
-- `A 2 kg block is on top of a 4 kg block and the lower block is pulled with 20 N force`
+![AI Problem Input and Simulation Matching](images/question_enter_img.png)
 
-## Deployment
+### 2. Live Graphs with Physics AI Assistant
+Shows synchronized motion/energy graphs with parameter controls and an in-context AI assistant panel.
 
-- Frontend deployment guide: `VERCEL_DEPLOYMENT.md`
-- Render configuration is included in `render.yaml`
+![Live Graphs with Physics AI Assistant](images/graphs_ai_assistnt.png)
 
-## Contributing
+### 3. My Simulations Dashboard (Logged-in Users Only)
+Shows the saved simulations view with filtering, quick load actions, and summary stats. This feature is only available when the user is logged in.
 
-1. Create a feature branch
-2. Make changes with tests/build passing
-3. Open a pull request
+![My Simulations Dashboard](images/my_simulations.png)
 
-## License
+### 4. Projectile Motion Simulation
+Shows a projectile trajectory visualization where launch angle and initial velocity can be adjusted to study range and peak height.
 
-MIT
+![Projectile Motion Simulation](images/projectile_motion.png)
 
-## Author
+### 5. Inclined Plane with Friction
+Shows force balance on an inclined surface with friction effects, helping users observe how slope and friction change acceleration.
 
-- Vignesh
-- GitHub: `@saivignesh060`
+![Inclined Plane with Friction](<images/inclined_plane_with _friction.png>)
+
+### 6. Simple Pendulum
+Shows periodic pendulum motion with live parameter control, useful for understanding oscillation behavior over time.
+
+![Simple Pendulum](images/simple_pendulum.png)
