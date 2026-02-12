@@ -1,40 +1,48 @@
 # Physics Visualizer
 
 ## 1. Project Title
-Physics Visualizer
+Physics Visualizer - AI-Powered Physics Learning System
 
 ## 2. Description
-Physics Visualizer is an AI-assisted educational web application that converts physics problem statements into interactive simulations.
+Physics Visualizer is an AI-assisted educational web application that helps students and educators understand physics through interactive simulations instead of static formulas alone.
 
-The MVP focuses on motion-based topics (kinematics and dynamics) and provides:
-- Natural-language problem input
-- Simulation matching and loading
-- Real-time animation
-- Live graphs for position, velocity, acceleration, and energy
-- AI assistant support for concept explanations
+Users can describe a problem in natural language, load a matching simulation, tune parameters, and observe both motion and graph outputs in real time. The system is designed for concept clarity, experimentation, and visual learning.
+
+MVP scope:
+- Focused on motion-heavy topics from kinematics and dynamics
+- Supports simulation search/matching from text prompts
+- Provides interactive controls (velocity, angle, gravity, mass, friction, etc.)
+- Renders real-time animation plus synchronized graphs for position, velocity, acceleration, and energy
+- Includes an AI assistant for contextual explanation of simulation behavior
+
+Current implementation status:
+- Monorepo with separate frontend and backend apps using npm workspaces
+- Backend simulation library with AI-assisted matching and fallback logic
+- Frontend workspace view for simulation loading, controls, animation, and analytics
+- Auth flow present for protected UX routes in MVP mode
 
 ## 3. Tech Stack Used
 ### Frontend
-- React 18
-- TypeScript
-- Vite
-- React Router DOM
-- Recharts
-- Tailwind CSS
+- React 18: component-based UI architecture
+- TypeScript: type safety across simulation and API contracts
+- Vite: fast local development server and production bundling
+- React Router DOM: page routing (`Home`, `Workspace`, `My Simulations`, `Help`, `Auth`)
+- Recharts: live plotting for motion and energy graphs
+- Tailwind CSS: utility-first styling for rapid UI development
 
 ### Backend
-- Node.js
-- Express
-- TypeScript
-- tsx
+- Node.js: JavaScript runtime for API services
+- Express: REST API routing and middleware
+- TypeScript: typed backend services and request handling
+- tsx: fast TypeScript runtime for development (`watch` mode)
 
 ### AI Integrations
-- Google Gemini API (`@google/generative-ai`)
-- Anthropic SDK (`@anthropic-ai/sdk`)
+- Google Gemini API (`@google/generative-ai`): simulation generation/matching and chatbot path
+- Anthropic SDK (`@anthropic-ai/sdk`): additional AI support path and fallback behavior
 
 ### Tooling
-- npm workspaces
-- concurrently
+- npm workspaces: manage frontend/backend from a single repository root
+- concurrently: run frontend and backend development servers together
 
 ## 4. Project Structure
 ```text
@@ -47,18 +55,33 @@ physics-visualizer/
 |   |   |-- pages/
 |   |   |-- types/
 |   |   `-- utils/
-|   `-- package.json
+|   |-- package.json
+|   `-- vite.config.ts
 |-- backend/
 |   |-- src/
 |   |   |-- data/
 |   |   |-- routes/
 |   |   |-- services/
 |   |   `-- utils/
-|   `-- package.json
+|   |-- package.json
+|   `-- tsconfig.json
 |-- images/
-|-- package.json
+|-- package.json              (workspace root scripts)
+|-- package-lock.json
+|-- render.yaml               (deployment config)
+|-- VERCEL_DEPLOYMENT.md
 `-- README.md
 ```
+
+Directory notes:
+- `frontend/src/components`: reusable UI modules like animation canvas, controls, graphs, chatbot, and input tools
+- `frontend/src/pages`: route-level pages and main user workflows
+- `frontend/src/api`: browser-to-backend API clients
+- `backend/src/data`: simulation definitions and template catalog
+- `backend/src/routes`: API endpoints (`/api`, `/api/simulation`)
+- `backend/src/services`: AI integration and simulation generation logic
+- `backend/src/utils`: matching and helper logic
+- `images/`: MVP demo screenshots used by this README
 
 ## 5. How to Run the Project
 ### Prerequisites
@@ -72,6 +95,8 @@ From the project root:
 npm install
 ```
 
+This installs dependencies for the root workspace, `frontend`, and `backend`.
+
 ### Environment Variables
 Create a file at `backend/.env`:
 
@@ -82,6 +107,13 @@ GEMINI_API_KEY=your_key_here
 GEMINI_MODEL=gemini-2.5-flash
 CLAUDE_API_KEY=your_key_here
 ```
+
+Environment variable notes:
+- `PORT`: backend server port
+- `FRONTEND_URL`: allowed origin for CORS
+- `GEMINI_API_KEY`: required for AI simulation generation endpoint and Gemini-powered features
+- `GEMINI_MODEL`: Gemini model selection (defaults to `gemini-2.5-flash`)
+- `CLAUDE_API_KEY`: optional Anthropic integration key for assistant/parser flows
 
 ### Run in Development
 From the project root:
@@ -94,6 +126,10 @@ This starts:
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:3000`
 
+Alternative commands:
+- `npm run dev:frontend` to run only the frontend
+- `npm run dev:backend` to run only the backend
+
 ### Build
 From the project root:
 
@@ -101,28 +137,39 @@ From the project root:
 npm run build
 ```
 
+This runs:
+- `npm run build:frontend`
+- `npm run build:backend`
+
+After backend build, run production backend with:
+
+```bash
+cd backend
+npm run start
+```
+
 ## 6. Dependencies
 ### Root
-- `concurrently`
+- `concurrently`: run multiple npm scripts in one terminal session
 
 ### Frontend
-- `react`, `react-dom`
-- `react-router-dom`
-- `recharts`
-- `katex`
-- `jspdf`
-- `tesseract.js`
-- `@anthropic-ai/sdk`
+- `react`, `react-dom`: UI rendering and state-driven interface
+- `react-router-dom`: client-side routing and protected route flow
+- `recharts`: charting for position/velocity/acceleration/energy graphs
+- `katex`: rendering formatted equations in educational UI
+- `jspdf`: export/report-style PDF generation
+- `tesseract.js`: OCR support for image-based problem input
+- `@anthropic-ai/sdk`: Anthropic client used by assistant-related flows
 
 ### Backend
-- `express`
-- `cors`
-- `dotenv`
-- `bcrypt`
-- `jsonwebtoken`
-- `pg`
-- `@google/generative-ai`
-- `@anthropic-ai/sdk`
+- `express`: API server and route handlers
+- `cors`: cross-origin access control for frontend-backend communication
+- `dotenv`: load environment variables from `.env`
+- `bcrypt`: password hashing utilities
+- `jsonwebtoken`: token generation/validation support
+- `pg`: PostgreSQL client for persistence-ready backend flows
+- `@google/generative-ai`: Gemini integration for generation and matching
+- `@anthropic-ai/sdk`: secondary AI integration and fallback assistant path
 
 ## 7. Important Instructions
 - `GEMINI_API_KEY` is optional for simulation matching and chatbot fallback flows, but required for `POST /api/simulation/generate`.
