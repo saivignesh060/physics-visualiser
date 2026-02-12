@@ -3,6 +3,10 @@
 ## 1. Project Title
 Physics Visualizer - AI-Powered Physics Learning System
 
+Live Deployment:
+- Frontend (Vercel): [https://physics-visualiser-frontend.vercel.app/](https://physics-visualiser-frontend.vercel.app/)
+- Backend: Deployed on Render
+
 ## 2. Description
 Physics Visualizer is an AI-assisted educational web application that helps students and educators understand physics through interactive simulations instead of static formulas alone.
 
@@ -43,6 +47,10 @@ Current implementation status:
 ### Tooling
 - npm workspaces: manage frontend/backend from a single repository root
 - concurrently: run frontend and backend development servers together
+
+### Deployment
+- Frontend hosting: Vercel
+- Backend hosting: Render
 
 ## 4. Project Structure
 ```text
