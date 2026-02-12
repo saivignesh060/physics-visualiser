@@ -268,17 +268,32 @@ Return ONLY valid JSON:
 
 function getChatFallback(userMessage: string, context?: any): string {
     const q = userMessage.toLowerCase()
+    const qCompact = q.replace(/[^a-z]/g, '')
     const params = context?.parameters || {}
     const domain = Array.isArray(context?.domain) ? context.domain[0] : context?.domain
+
+    if (
+        q.includes('projectile') ||
+        q.includes('trajectory') ||
+        q.includes('parabola')
+    ) {
+        return 'Projectile motion is 2D motion under constant gravity: horizontal velocity stays constant while vertical velocity changes due to gravity, producing a curved trajectory.'
+    }
 
     if (q.includes('velocity') || q.includes('speed')) {
         const v0 = params.initialVelocity ?? 0
         return `Initial velocity is ${Number(v0).toFixed(2)} m/s. Increase it to make motion faster and to increase displacement over the same time interval.`
     }
 
-    if (q.includes('acceleration') || q.includes('gravity')) {
+    if (
+        q.includes('acceleration') ||
+        q.includes('accelleration') ||
+        qCompact.includes('acceleration') ||
+        qCompact.includes('accelleration') ||
+        q.includes('gravity')
+    ) {
         const g = params.gravity ?? 9.8
-        return `Acceleration controls how quickly velocity changes. In this setup, gravity/acceleration is ${Number(g).toFixed(2)} m/s^2.`
+        return `Acceleration is the rate of change of velocity with time. In this simulation, gravity/acceleration is ${Number(g).toFixed(2)} m/s^2, so velocity changes by about ${Number(g).toFixed(2)} m/s each second in that direction.`
     }
 
     if (q.includes('friction')) {
@@ -295,6 +310,10 @@ function getChatFallback(userMessage: string, context?: any): string {
 
     if (q.includes('energy')) {
         return 'Watch the energy plot: kinetic and potential energy exchange during motion, while total energy should stay near constant in idealized cases.'
+    }
+
+    if (q.includes('force')) {
+        return 'Use F = ma: net force sets acceleration. Increase driving force to speed motion up; increase opposing forces (like friction) to reduce acceleration or stop motion.'
     }
 
     return `You are exploring a ${domain || 'physics'} simulation. Ask about acceleration, force balance, energy, or how one slider affects the trajectory.`

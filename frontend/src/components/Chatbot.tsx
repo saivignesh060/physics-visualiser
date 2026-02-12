@@ -23,15 +23,26 @@ export default function Chatbot({ problem, parameters }: ChatbotProps) {
 
     const generateFallbackResponse = (question: string): string => {
         const q = question.toLowerCase()
+        const qCompact = q.replace(/[^a-z]/g, '')
         const domain = problem.domain[0] || 'physics'
+
+        if (q.includes('projectile') || q.includes('trajectory') || q.includes('parabola')) {
+            return 'Projectile motion is 2D motion under gravity: horizontal velocity remains constant, while vertical velocity changes due to gravity, creating a curved path.'
+        }
 
         if (q.includes('energy')) {
             return 'Check the energy graph while the animation runs. If losses are not modeled, total energy should stay near constant while kinetic and potential energies trade off.'
         }
 
-        if (q.includes('acceleration') || q.includes('gravity')) {
+        if (
+            q.includes('acceleration') ||
+            q.includes('accelleration') ||
+            qCompact.includes('acceleration') ||
+            qCompact.includes('accelleration') ||
+            q.includes('gravity')
+        ) {
             const g = parameters.gravity ?? 9.8
-            return `Acceleration controls how quickly velocity changes over time. In this setup, gravity is ${g.toFixed(2)} m/s^2.`
+            return `Acceleration is how quickly velocity changes over time. In this setup, gravity/acceleration is ${g.toFixed(2)} m/s^2.`
         }
 
         if (q.includes('velocity') || q.includes('speed')) {
