@@ -68,7 +68,7 @@ export const SIMULATION_LIBRARY: SimulationTemplate[] = [
     {
         id: 'free-fall',
         name: 'Free Fall',
-        description: 'An object falls freely under gravity from rest',
+        description: 'An object falls vertically under gravity from a chosen height',
         domain: 'kinematics',
         keywords: ['free fall', 'falling', 'drop', 'dropped', 'gravity fall'],
         defaultParameters: {
@@ -79,11 +79,12 @@ export const SIMULATION_LIBRARY: SimulationTemplate[] = [
             initialHeight: 100,
         },
         parameterDefinitions: [
+            { key: 'initialVelocity', label: 'Initial Velocity', min: 0, max: 30, step: 0.5, unit: 'm/s' },
             { key: 'gravity', label: 'Gravity', min: 1, max: 20, step: 0.1, unit: 'm/s²' },
             { key: 'mass', label: 'Mass', min: 0.1, max: 10, step: 0.1, unit: 'kg' },
             { key: 'initialHeight', label: 'Initial Height', min: 10, max: 500, step: 10, unit: 'm' },
         ],
-        explanation: 'In free fall, objects accelerate downward at g regardless of mass (neglecting air resistance).',
+        explanation: 'In free fall, objects accelerate downward at g regardless of mass (neglecting air resistance). Set both initial height and initial velocity to explore different drops.',
         objectType: 'point_mass',
     },
     {
@@ -95,12 +96,13 @@ export const SIMULATION_LIBRARY: SimulationTemplate[] = [
         defaultParameters: {
             initialVelocity: 5,
             angle: 0,
-            gravity: 2,
+            acceleration: 2,
+            gravity: 9.8,
             mass: 1,
         },
         parameterDefinitions: [
             { key: 'initialVelocity', label: 'Initial Velocity', min: 0, max: 20, step: 0.5, unit: 'm/s' },
-            { key: 'gravity', label: 'Acceleration', min: 0, max: 10, step: 0.1, unit: 'm/s²' },
+            { key: 'acceleration', label: 'Acceleration', min: 0, max: 10, step: 0.1, unit: 'm/s²' },
             { key: 'mass', label: 'Mass', min: 0.1, max: 10, step: 0.1, unit: 'kg' },
         ],
         explanation: 'Uniform acceleration means velocity changes at a constant rate over time.',

@@ -22,7 +22,7 @@ export default function ControlPanel({ parameters, onParameterChange, onReset, p
 
             {/* Dynamic parameter controls based on simulation */}
             {parameterDefs.map(param => {
-                const value = parameters[param.key] || param.min
+                const value = parameters[param.key] ?? param.min
 
                 return (
                     <div key={param.key}>
@@ -65,19 +65,29 @@ export default function ControlPanel({ parameters, onParameterChange, onReset, p
                             <div className="flex justify-between">
                                 <span className="text-gray-600">Initial Velocity:</span>
                                 <span className="font-mono font-semibold text-gray-900">
-                                    {formatNumber(parameters.initialVelocity || 0)} m/s
+                                    {formatNumber(parameters.initialVelocity ?? 0)} m/s
                                 </span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-600">Launch Angle:</span>
                                 <span className="font-mono font-semibold text-gray-900">
-                                    {formatNumber(parameters.angle || 0)}°
+                                    {formatNumber(parameters.angle ?? 0)}°
                                 </span>
                             </div>
+                            {parameters.initialHeight !== undefined && (
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Initial Height:</span>
+                                    <span className="font-mono font-semibold text-gray-900">
+                                        {formatNumber(parameters.initialHeight)} m
+                                    </span>
+                                </div>
+                            )}
                             <div className="flex justify-between">
-                                <span className="text-gray-600">Gravity:</span>
+                                <span className="text-gray-600">
+                                    {parameters.acceleration !== undefined ? 'Acceleration:' : 'Gravity:'}
+                                </span>
                                 <span className="font-mono font-semibold text-gray-900">
-                                    {formatNumber(parameters.gravity || 9.8)} m/s²
+                                    {formatNumber(parameters.acceleration ?? parameters.gravity ?? 9.8)} m/s²
                                 </span>
                             </div>
                         </>

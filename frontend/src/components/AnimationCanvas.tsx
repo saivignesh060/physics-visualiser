@@ -23,33 +23,63 @@ export default function AnimationCanvas({
 }: AnimationCanvasProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const animationRef = useRef<number>()
+    const lastFrameTimeRef = useRef<number | null>(null)
+    const currentTimeRef = useRef(currentTime)
+
+    useEffect(() => {
+        currentTimeRef.current = currentTime
+    }, [currentTime])
 
     // Auto-play on data load
     useEffect(() => {
-        if (graphData.length > 0 && currentTime === 0) {
+        if (graphData.length > 0 && currentTime === 0 && !isPlaying) {
             onPlayPauseToggle()
         }
-    }, [graphData])
+    }, [graphData, currentTime, isPlaying, onPlayPauseToggle])
 
     // Animation loop
     useEffect(() => {
-        if (!isPlaying || graphData.length === 0) return
+        if (!isPlaying || graphData.length === 0) {
+            lastFrameTimeRef.current = null
+            return
+        }
 
-        const animate = () => {
-            const newTime = currentTime + 0.02
-            if (newTime >= graphData[graphData.length - 1]?.time || 0) {
-                onTimeUpdate(0)
-            } else {
-                onTimeUpdate(newTime)
+        const maxTime = graphData[graphData.length - 1]?.time ?? 0
+        if (maxTime <= 0) return
+
+        if (currentTimeRef.current >= maxTime) {
+            currentTimeRef.current = 0
+            onTimeUpdate(0)
+        }
+
+        const animate = (timestamp: number) => {
+            if (lastFrameTimeRef.current === null) {
+                lastFrameTimeRef.current = timestamp
+                animationRef.current = requestAnimationFrame(animate)
+                return
             }
+
+            const deltaSeconds = Math.max(0, (timestamp - lastFrameTimeRef.current) / 1000)
+            lastFrameTimeRef.current = timestamp
+
+            const nextTime = currentTimeRef.current + deltaSeconds
+            if (nextTime >= maxTime) {
+                currentTimeRef.current = maxTime
+                onTimeUpdate(maxTime)
+                return
+            }
+
+            currentTimeRef.current = nextTime
+            onTimeUpdate(nextTime)
             animationRef.current = requestAnimationFrame(animate)
         }
 
         animationRef.current = requestAnimationFrame(animate)
         return () => {
             if (animationRef.current) cancelAnimationFrame(animationRef.current)
+            lastFrameTimeRef.current = null
         }
-    }, [isPlaying, currentTime, graphData, onTimeUpdate])
+    }, [isPlaying, graphData, onTimeUpdate])
 
     // Draw canvas
     useEffect(() => {
@@ -68,7 +98,7 @@ export default function AnimationCanvas({
         ctx.fillRect(0, 0, width, height)
 
         // Find current data point
-        const currentData = graphData.find(d => d.time >= currentTime) || graphData[0]
+        const currentData = graphData.find(d => d.time >= currentTime) || graphData[graphData.length - 1]
 
         // Draw based on explicit simulation type
         switch (simulationType) {
@@ -111,7 +141,7 @@ export default function AnimationCanvas({
                     onClick={onPlayPauseToggle}
                     className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
                 >
-                    {isPlaying ? '⏸ Pause' : '▶ Play'}
+                    {isPlaying ? 'Pause' : 'Play'}
                 </button>
             </div>
             <canvas

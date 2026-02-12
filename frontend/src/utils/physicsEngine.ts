@@ -50,7 +50,7 @@ export function getSimulationType(problem: PhysicsProblem, params: SimulationPar
         return 'vertical-projectile'
     }
 
-    if (params.angle === 270 && params.initialVelocity === 0) {
+    if (params.angle === 270) {
         return 'free-fall'
     }
 
@@ -93,41 +93,36 @@ export function generateSimulationData(
 // ==================== KINEMATICS (Projectile Motion) ====================
 function generateKinematicsData(params: SimulationParameters): GraphDataPoint[] {
     const data: GraphDataPoint[] = []
-    const g = params.gravity || 9.8
+    const g = params.gravity ?? 9.8
+    const acceleration1D = params.acceleration ?? params.gravity ?? 2
     const dt = 0.02 // 20ms time step
 
-    const angleRad = (params.angle * Math.PI) / 180
-    let vx = params.initialVelocity * Math.cos(angleRad)
-    let vy = params.initialVelocity * Math.sin(angleRad)
+    const angleDeg = params.angle ?? 45
+    const angleRad = (angleDeg * Math.PI) / 180
+    const initialVelocity = params.initialVelocity ?? 0
+    const mass = params.mass ?? 1
+
+    const isUniformAccel = angleDeg === 0 || angleDeg === 180
+
+    let ax = 0
+    let ay = -g
+    let vx = initialVelocity * Math.cos(angleRad)
+    let vy = initialVelocity * Math.sin(angleRad)
     let x = 0
-    let y = params.initialHeight || 0
+    let y = params.initialHeight ?? 0
     let t = 0
 
-    const mass = params.mass || 1
     const maxTime = 10
 
-    const isUniformAccel = params.angle === 0 || params.angle === 180
+    if (isUniformAccel) {
+        ax = Math.abs(acceleration1D) * (angleDeg === 180 ? -1 : 1)
+        ay = 0
+        vy = 0
+        y = 0
+    }
 
-    // Semi-Implicit Euler Integration
-    while (t < maxTime && y >= -100) { // Allow dropping below 0 for free fall visual
-        // Calculate forces and acceleration
-        let ax = 0
-        let ay = -g
-
-        if (isUniformAccel) {
-            // Gravity slider acts as acceleration magnitude
-            ax = g * Math.cos(angleRad)
-            ay = g * Math.sin(angleRad)
-        }
-
-        // Update velocity (using acceleration)
-        vx += ax * dt
-        vy += ay * dt
-
-        // Update position (using NEW velocity - Semi-Implicit Euler)
-        x += vx * dt
-        y += vy * dt
-
+    // Push initial state, then integrate forward in time.
+    while (t <= maxTime) {
         // Calculate energies
         const speed = Math.sqrt(vx * vx + vy * vy)
         const ke = 0.5 * mass * speed * speed
@@ -146,10 +141,15 @@ function generateKinematicsData(params: SimulationParameters): GraphDataPoint[] 
             totalEnergy: ke + pe,
         })
 
-        t += dt
+        if (!isUniformAccel && t > 0 && y <= 0) break
+        if (!isUniformAccel && y < -100) break
 
-        // Stop if hit ground
-        if (y < 0 && data.length > 1) break
+        // Semi-Implicit Euler Integration
+        vx += ax * dt
+        vy += ay * dt
+        x += vx * dt
+        y += vy * dt
+        t += dt
     }
 
     return data
