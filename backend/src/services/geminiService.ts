@@ -266,6 +266,40 @@ Return ONLY valid JSON:
     }
 }
 
+function getChatFallback(userMessage: string, context?: any): string {
+    const q = userMessage.toLowerCase()
+    const params = context?.parameters || {}
+    const domain = Array.isArray(context?.domain) ? context.domain[0] : context?.domain
+
+    if (q.includes('velocity') || q.includes('speed')) {
+        const v0 = params.initialVelocity ?? 0
+        return `Initial velocity is ${Number(v0).toFixed(2)} m/s. Increase it to make motion faster and to increase displacement over the same time interval.`
+    }
+
+    if (q.includes('acceleration') || q.includes('gravity')) {
+        const g = params.gravity ?? 9.8
+        return `Acceleration controls how quickly velocity changes. In this setup, gravity/acceleration is ${Number(g).toFixed(2)} m/s^2.`
+    }
+
+    if (q.includes('friction')) {
+        const mu = params.frictionCoefficient ?? params.kineticFriction ?? params.staticFriction
+        if (mu !== undefined) {
+            return `Friction coefficient is ${Number(mu).toFixed(2)}. Increasing friction reduces acceleration and can stop motion when resistive force exceeds driving force.`
+        }
+        return 'Higher friction reduces net force and slows the system; lower friction lets it accelerate more.'
+    }
+
+    if (q.includes('pulley') || q.includes('incline')) {
+        return 'For incline-pulley systems, motion direction depends on the force balance between the hanging mass weight and the incline-side gravity plus friction.'
+    }
+
+    if (q.includes('energy')) {
+        return 'Watch the energy plot: kinetic and potential energy exchange during motion, while total energy should stay near constant in idealized cases.'
+    }
+
+    return `You are exploring a ${domain || 'physics'} simulation. Ask about acceleration, force balance, energy, or how one slider affects the trajectory.`
+}
+
 /**
  * Chat with AI assistant using Gemini
  */
@@ -275,7 +309,7 @@ export async function chatWithGemini(userMessage: string, context?: any): Promis
         const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
 
         if (!apiKey) {
-            return "I'm here to help you understand physics. Ask about motion, forces, acceleration, or energy trends in the simulation."
+            return getChatFallback(userMessage, context)
         }
 
         const systemPrompt = `You are a helpful physics tutor assistant for a physics visualization platform.
@@ -296,7 +330,11 @@ Guidelines:
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    temperature: 0.4,
+                    maxOutputTokens: 500
+                }
             })
         })
 
@@ -314,6 +352,6 @@ Guidelines:
         return text.trim()
     } catch (error) {
         console.error('Gemini Chat Error:', error)
-        return "I can still help with this simulation. Try asking about acceleration, force balance, energy, or what changes when you adjust one slider at a time."
+        return getChatFallback(userMessage, context)
     }
 }

@@ -442,12 +442,23 @@ function generateInclinePulleyData(params: SimulationParameters): GraphDataPoint
     let t = 0
     const maxTime = 10
 
+    // Keep physics travel limits aligned with renderer geometry
+    // renderer: inclineLength=300px, pulleyExtension=40px, scale=40px/m, block half-height=20px => 0.5m
+    const inclineLengthMeters = 7.5
+    const pulleyExtensionMeters = 1.0
+    const hangingBlockHalfHeightMeters = 0.5
+    const maxDropDistanceMeters =
+        (inclineLengthMeters + pulleyExtensionMeters) * Math.sin(angleRad) - hangingBlockHalfHeightMeters
+    const maxTravelByGround = Math.max(0, maxDropDistanceMeters)
+    const maxTravelByIncline = Math.max(0, inclineLengthMeters - 0.5)
+    const maxTravel = Math.min(maxTravelByGround, maxTravelByIncline)
+
     const normalForce = m1 * g * Math.cos(angleRad)
     const m1GravityParallel = m1 * g * Math.sin(angleRad)
     const m2GravityForce = m2 * g
     const systemMass = m1 + m2
 
-    while (t < maxTime && s < 5) {
+    while (t < maxTime) {
         let a = 0
 
         if (Math.abs(v) < 0.001) {
@@ -477,6 +488,22 @@ function generateInclinePulleyData(params: SimulationParameters): GraphDataPoint
         v += a * dt
         s += v * dt
 
+        // Lower boundary: m1 cannot go below base of incline
+        if (s < 0) {
+            s = 0
+            v = 0
+            a = 0
+        }
+
+        // Upper boundary: stop when hanging red block touches ground
+        let reachedGround = false
+        if (s >= maxTravel) {
+            s = maxTravel
+            v = 0
+            a = 0
+            reachedGround = true
+        }
+
         // Position of m1 on incline
         const x1 = s * Math.cos(angleRad)
         const y1 = s * Math.sin(angleRad)
@@ -504,6 +531,8 @@ function generateInclinePulleyData(params: SimulationParameters): GraphDataPoint
         })
 
         t += dt
+
+        if (reachedGround) break
     }
 
     return data
